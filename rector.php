@@ -26,9 +26,6 @@ return static function(RectorConfig $rectorConfig): void {
     ]);
 
     $rectorConfig->skip([
-        StringClassNameToClassConstantRector::class => [
-            __DIR__ . '/src/ConfigProvider.php',
-        ],
         ClosureToArrowFunctionRector::class => [
             __DIR__ . '/test',
         ],
