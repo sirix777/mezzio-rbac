@@ -7,7 +7,7 @@ namespace Sirix\Mezzio\Rbac\Attribute;
 use Attribute;
 use Sirix\Mezzio\Rbac\Middleware\AuthorizeMiddleware;
 use Sirix\Mezzio\Rbac\RbacAttribute;
-use Sirix\Mezzio\Routing\Attributes\Contract\RouteAttributeModifierInterface;
+use Sirix\Mezzio\Routing\Contracts\RouteAttributeModifierInterface;
 
 #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
 final readonly class Can implements RouteAttributeModifierInterface

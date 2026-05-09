@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Sirix\Mezzio\Rbac\Attribute\Can;
 use Sirix\Mezzio\Rbac\Middleware\AuthorizeMiddleware;
 use Sirix\Mezzio\Rbac\RbacAttribute;
-use Sirix\Mezzio\Routing\Attributes\Contract\RouteAttributeModifierInterface;
+use Sirix\Mezzio\Routing\Contracts\RouteAttributeModifierInterface;
 
 final class CanTest extends TestCase
 {
