@@ -1,4 +1,5 @@
 # Mezzio RBAC
+[![Latest Stable Version](http://poser.pugx.org/sirix/mezzio-rbac/v)](https://packagist.org/packages/sirix/mezzio-rbac) [![Total Downloads](http://poser.pugx.org/sirix/mezzio-rbac/downloads)](https://packagist.org/packages/sirix/mezzio-rbac) [![Latest Unstable Version](http://poser.pugx.org/sirix/mezzio-rbac/v/unstable)](https://packagist.org/packages/sirix/mezzio-rbac) [![License](http://poser.pugx.org/sirix/mezzio-rbac/license)](https://packagist.org/packages/sirix/mezzio-rbac) [![PHP Version Require](http://poser.pugx.org/sirix/mezzio-rbac/require/php)](https://packagist.org/packages/sirix/mezzio-rbac)
 
 RBAC authorization package for Mezzio framework with attribute support.
 
