@@ -56,7 +56,7 @@ final readonly class ConfigProvider
                 CanAttributeExtractor::class => CanAttributeExtractor::class,
             ],
             'aliases' => [
-                Permissions::class => PermissionsInterface::class,
+                PermissionsInterface::class => Permissions::class,
             ],
         ];
     }
