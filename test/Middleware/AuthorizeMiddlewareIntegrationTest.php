@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace SirixTest\Mezzio\Rbac\Middleware;
 
-use Mezzio\Router\Route;
 use Mezzio\Router\RouteResult;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Sirix\Mezzio\Rbac\Actor\GuestActor;
 use Sirix\Mezzio\Rbac\Actor\RequestAttributeActorProvider;
@@ -30,6 +28,8 @@ use Sirix\Mezzio\Rbac\RuleResolver;
 
 final class AuthorizeMiddlewareIntegrationTest extends TestCase
 {
+    use RouteResultFactoryTrait;
+
     #[Test]
     public function deniesNonAdminActorWhenPermissionExistsOnlyInMatchedRouteOptions(): void
     {
@@ -124,7 +124,7 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
         $routeResult = $this->routeResult([
             RbacAttribute::Permission->value => $permission,
             RbacAttribute::Context->value => $context,
-        ]);
+        ], '/admin', 'admin');
 
         $actor = new class($roles) {
             /**
@@ -153,26 +153,5 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
         ;
 
         return $request;
-    }
-
-    /**
-     * @param array<string, mixed> $options
-     */
-    private function routeResult(array $options): RouteResult
-    {
-        $route = new Route(
-            '/admin',
-            new class implements MiddlewareInterface {
-                public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-                {
-                    return $handler->handle($request);
-                }
-            },
-            ['GET'],
-            'admin',
-        );
-        $route->setOptions($options);
-
-        return RouteResult::fromRoute($route);
     }
 }

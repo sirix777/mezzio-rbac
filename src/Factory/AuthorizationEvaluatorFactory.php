@@ -8,7 +8,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Sirix\Mezzio\Rbac\AuthorizationEvaluator;
-use Sirix\Mezzio\Rbac\Contract\PermissionMapInterface;
+use Sirix\Mezzio\Rbac\Contract\PermissionLookupInterface;
 use Sirix\Mezzio\Rbac\RuleResolver;
 
 final class AuthorizationEvaluatorFactory
@@ -20,7 +20,7 @@ final class AuthorizationEvaluatorFactory
     public function __invoke(ContainerInterface $container): AuthorizationEvaluator
     {
         return new AuthorizationEvaluator(
-            $container->get(PermissionMapInterface::class),
+            $container->get(PermissionLookupInterface::class),
             $container->get(RuleResolver::class),
         );
     }

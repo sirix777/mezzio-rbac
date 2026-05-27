@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace SirixTest\Mezzio\Rbac;
 
+use Laminas\ServiceManager\ServiceManager;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
+use Sirix\Mezzio\Rbac\Actor\Actor;
 use Sirix\Mezzio\Rbac\Actor\GuestActor;
 use Sirix\Mezzio\Rbac\AuthorizationEvaluator;
 use Sirix\Mezzio\Rbac\ConfigProvider;
 use Sirix\Mezzio\Rbac\Contract\ActorProviderInterface;
 use Sirix\Mezzio\Rbac\Contract\GuardInterface;
-use Sirix\Mezzio\Rbac\Contract\PermissionMapInterface;
+use Sirix\Mezzio\Rbac\Contract\PermissionLookupInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionsInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionStoreInterface;
 use Sirix\Mezzio\Rbac\Contract\RequestActorProviderInterface;
@@ -20,8 +23,11 @@ use Sirix\Mezzio\Rbac\Extractor\CanAttributeExtractor;
 use Sirix\Mezzio\Rbac\InMemoryPermissionStore;
 use Sirix\Mezzio\Rbac\Middleware\AuthorizeMiddleware;
 use Sirix\Mezzio\Rbac\PermissionMatcher;
+use Sirix\Mezzio\Rbac\Permissions;
+use Sirix\Mezzio\Rbac\RequestGuard;
 use Sirix\Mezzio\Rbac\Rule\AllowRule;
 use Sirix\Mezzio\Rbac\Rule\ForbidRule;
+use Sirix\Mezzio\Rbac\RuleResolver;
 
 final class ConfigProviderTest extends TestCase
 {
@@ -54,16 +60,16 @@ final class ConfigProviderTest extends TestCase
         $dependencies = $provider->getDependencies();
 
         self::assertArrayHasKey(PermissionsInterface::class, $dependencies['factories']);
-        self::assertArrayHasKey(PermissionMapInterface::class, $dependencies['factories']);
+        self::assertSame(PermissionsInterface::class, $dependencies['aliases'][PermissionLookupInterface::class]);
     }
 
     #[Test]
-    public function registersPermissionStoreAsInvokable(): void
+    public function registersPermissionStoreAsInvokableAlias(): void
     {
         $provider = new ConfigProvider();
         $dependencies = $provider->getDependencies();
 
-        self::assertArrayHasKey(PermissionStoreInterface::class, $dependencies['factories']);
+        self::assertSame(InMemoryPermissionStore::class, $dependencies['aliases'][PermissionStoreInterface::class]);
         self::assertArrayHasKey(InMemoryPermissionStore::class, $dependencies['invokables']);
     }
 
@@ -107,5 +113,45 @@ final class ConfigProviderTest extends TestCase
         $dependencies = $provider->getDependencies();
 
         self::assertArrayHasKey(AuthorizeMiddleware::class, $dependencies['factories']);
+    }
+
+    #[Test]
+    public function configuredServiceManagerResolvesCoreServices(): void
+    {
+        $container = new ServiceManager((new ConfigProvider())->getDependencies());
+
+        self::assertInstanceOf(InMemoryPermissionStore::class, $container->get(PermissionStoreInterface::class));
+        self::assertInstanceOf(Permissions::class, $container->get(PermissionsInterface::class));
+        self::assertSame(
+            $container->get(PermissionsInterface::class),
+            $container->get(PermissionLookupInterface::class),
+        );
+        self::assertInstanceOf(RuleResolver::class, $container->get(RuleResolver::class));
+        self::assertInstanceOf(AuthorizationEvaluator::class, $container->get(AuthorizationEvaluator::class));
+        self::assertInstanceOf(RequestGuard::class, $container->get(RequestGuardInterface::class));
+        self::assertInstanceOf(AuthorizeMiddleware::class, $container->get(AuthorizeMiddleware::class));
+    }
+
+    #[Test]
+    public function configuredContainerSharesPermissionsBetweenWriteAndReadContracts(): void
+    {
+        $container = new ServiceManager((new ConfigProvider())->getDependencies());
+
+        $permissions = $container->get(PermissionsInterface::class);
+        self::assertInstanceOf(PermissionsInterface::class, $permissions);
+        $permissions->addRole('admin');
+        $permissions->associate('admin', 'posts.read');
+
+        $request = $this->createMock(ServerRequestInterface::class);
+        $request->method('getAttribute')
+            ->willReturnCallback(static fn (string $name, $default = null): mixed => match ($name) {
+                'sirix.authentication.actor' => new Actor(['admin']),
+                default => $default,
+            })
+        ;
+
+        $guard = $container->get(RequestGuardInterface::class);
+        self::assertInstanceOf(RequestGuardInterface::class, $guard);
+        self::assertTrue($guard->allows($request, 'posts.read'));
     }
 }

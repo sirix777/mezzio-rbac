@@ -7,7 +7,7 @@ namespace Sirix\Mezzio\Rbac;
 use Sirix\Mezzio\Rbac\Actor\GuestActor;
 use Sirix\Mezzio\Rbac\Contract\ActorProviderInterface;
 use Sirix\Mezzio\Rbac\Contract\GuardInterface;
-use Sirix\Mezzio\Rbac\Contract\PermissionMapInterface;
+use Sirix\Mezzio\Rbac\Contract\PermissionLookupInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionsInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionStoreInterface;
 use Sirix\Mezzio\Rbac\Contract\RequestActorProviderInterface;
@@ -47,8 +47,6 @@ final readonly class ConfigProvider
                 GuardInterface::class => GuardFactory::class,
                 RequestGuardInterface::class => RequestGuardFactory::class,
                 PermissionsInterface::class => PermissionsFactory::class,
-                PermissionMapInterface::class => PermissionsFactory::class,
-                PermissionStoreInterface::class => InMemoryPermissionStore::class,
                 AuthorizationEvaluator::class => AuthorizationEvaluatorFactory::class,
                 RuleResolver::class => RuleResolverFactory::class,
                 ActorProviderInterface::class => ActorProviderFactory::class,
@@ -64,7 +62,8 @@ final readonly class ConfigProvider
                 CanAttributeExtractor::class => CanAttributeExtractor::class,
             ],
             'aliases' => [
-                PermissionsInterface::class => Permissions::class,
+                PermissionLookupInterface::class => PermissionsInterface::class,
+                PermissionStoreInterface::class => InMemoryPermissionStore::class,
             ],
         ];
     }

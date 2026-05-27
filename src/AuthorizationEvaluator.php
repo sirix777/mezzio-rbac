@@ -6,11 +6,11 @@ namespace Sirix\Mezzio\Rbac;
 
 use Sirix\Mezzio\Rbac\Contract\ActorInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionAssociationInterface;
-use Sirix\Mezzio\Rbac\Contract\PermissionMapInterface;
+use Sirix\Mezzio\Rbac\Contract\PermissionLookupInterface;
 
 final readonly class AuthorizationEvaluator
 {
-    public function __construct(private PermissionMapInterface $permissions, private RuleResolver $ruleResolver) {}
+    public function __construct(private PermissionLookupInterface $permissions, private RuleResolver $ruleResolver) {}
 
     /**
      * @param array<string, mixed> $context

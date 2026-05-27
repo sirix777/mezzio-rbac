@@ -242,7 +242,7 @@ AuthenticateMiddleware
   -> request attribute sirix.authentication.actor
   -> AuthorizeMiddleware
   -> RequestGuard
-  -> permission map/rules
+  -> permission lookup/rules
 ```
 
 With attributes:
@@ -294,6 +294,10 @@ The package depends on contracts, not on concrete persistence.
 Public storage contract:
 
 - `Sirix\Mezzio\Rbac\Contract\PermissionStoreInterface`
+
+Read-only lookup contract used by authorization internals:
+
+- `Sirix\Mezzio\Rbac\Contract\PermissionLookupInterface`
 
 Default implementation:
 
@@ -387,6 +391,7 @@ As shown in the [Rules](#rules) section, implement `RuleInterface` to add dynami
 - `RequestActorProviderInterface`
 - `RequestAttributeActorProvider`
 - `Permissions`
+- `PermissionLookupInterface`
 - `PermissionMatcher`
 - `RuleResolver`
 - `InMemoryPermissionStore`

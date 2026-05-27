@@ -6,7 +6,7 @@ namespace Sirix\Mezzio\Rbac;
 
 use InvalidArgumentException;
 use Sirix\Mezzio\Rbac\Contract\PermissionAssociationInterface;
-use Sirix\Mezzio\Rbac\Contract\PermissionMapInterface;
+use Sirix\Mezzio\Rbac\Contract\PermissionLookupInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionsInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionStoreInterface;
 use Sirix\Mezzio\Rbac\Contract\RuleInterface;
@@ -14,7 +14,7 @@ use Sirix\Mezzio\Rbac\Contract\RuleInterface;
 use function array_reverse;
 use function trim;
 
-final readonly class Permissions implements PermissionsInterface, PermissionMapInterface
+final readonly class Permissions implements PermissionsInterface, PermissionLookupInterface
 {
     public function __construct(private PermissionMatcher $matcher, private PermissionStoreInterface $store) {}
 
