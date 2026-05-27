@@ -6,42 +6,22 @@ namespace Sirix\Mezzio\Rbac;
 
 use Sirix\Mezzio\Rbac\Contract\ActorProviderInterface;
 use Sirix\Mezzio\Rbac\Contract\GuardInterface;
-use Sirix\Mezzio\Rbac\Contract\PermissionAssociationInterface;
-use Sirix\Mezzio\Rbac\Contract\PermissionMapInterface;
 use Sirix\Mezzio\Rbac\Exception\AuthorizationException;
 
 final readonly class Guard implements GuardInterface
 {
-    public function __construct(
-        private ActorProviderInterface $actorProvider,
-        private PermissionMapInterface $permissions,
-        private RuleResolver $ruleResolver,
-    ) {}
+    public function __construct(private ActorProviderInterface $actorProvider, private AuthorizationEvaluator $evaluator) {}
 
     /**
      * @param array<string, mixed> $context
      */
     public function allows(string $permission, array $context = []): bool
     {
-        $actor = $this->actorProvider->getActor();
-
-        foreach ($actor->getRoles() as $role) {
-            $association = $this->permissions->bestAssociationForRole(
-                $role,
-                $permission,
-            );
-
-            if (! $association instanceof PermissionAssociationInterface) {
-                continue;
-            }
-
-            $rule = $this->ruleResolver->resolve($association->getRule());
-            if ($rule->allows($actor, $permission, $context)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->evaluator->allows(
+            $this->actorProvider->getActor(),
+            $permission,
+            $context,
+        );
     }
 
     /**

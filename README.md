@@ -1,9 +1,8 @@
 # Mezzio RBAC
+
 [![Latest Stable Version](http://poser.pugx.org/sirix/mezzio-rbac/v)](https://packagist.org/packages/sirix/mezzio-rbac) [![Total Downloads](http://poser.pugx.org/sirix/mezzio-rbac/downloads)](https://packagist.org/packages/sirix/mezzio-rbac) [![Latest Unstable Version](http://poser.pugx.org/sirix/mezzio-rbac/v/unstable)](https://packagist.org/packages/sirix/mezzio-rbac) [![License](http://poser.pugx.org/sirix/mezzio-rbac/license)](https://packagist.org/packages/sirix/mezzio-rbac) [![PHP Version Require](http://poser.pugx.org/sirix/mezzio-rbac/require/php)](https://packagist.org/packages/sirix/mezzio-rbac)
 
-RBAC authorization package for Mezzio framework with attribute support.
-
-> **Pre-1.0 package:** Not yet production-ready. Public API and configuration may change with breaking changes before `1.0.0`.
+RBAC authorization package for Mezzio with PSR-15 middleware and optional PHP attribute integration.
 
 ## Installation
 
@@ -27,9 +26,22 @@ $actor = new Actor(['editor', 'moderator']);
 
 Guest fallback is provided by `Sirix\Mezzio\Rbac\Actor\GuestActor`.
 
+### Authorization paths
+
+The package has two authorization paths:
+
+| Use case | Service |
+|----------|---------|
+| HTTP request authorization | `RequestGuardInterface` / `AuthorizeMiddleware` |
+| Non-HTTP service or CLI authorization | `GuardInterface` |
+
+`GuardInterface` remains request-independent. It uses `ActorProviderInterface` and is useful from services, CLI commands, or application-managed contexts.
+
+`AuthorizeMiddleware` uses `RequestGuardInterface` so it can authorize against the actor stored on the current PSR-7 request.
+
 ### Guard
 
-Main authorization entrypoint:
+Main non-HTTP authorization entrypoint:
 
 ```php
 use Sirix\Mezzio\Rbac\Contract\GuardInterface;
@@ -40,6 +52,31 @@ $guard->authorize('posts.delete');
 ```
 
 `authorize()` throws `Sirix\Mezzio\Rbac\Exception\AuthorizationException` with HTTP status `403`.
+
+### Request Guard
+
+HTTP-aware authorization entrypoint:
+
+```php
+use Psr\Http\Message\ServerRequestInterface;
+use Sirix\Mezzio\Rbac\Contract\RequestGuardInterface;
+
+final readonly class PostHandler
+{
+    public function __construct(private RequestGuardInterface $guard) {}
+
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
+        $this->guard->authorize($request, 'posts.update', [
+            'postId' => $request->getAttribute('id'),
+        ]);
+
+        // ...
+    }
+}
+```
+
+For route-level protection, prefer `AuthorizeMiddleware` or `#[Can]`.
 
 ### Permissions
 
@@ -64,24 +101,24 @@ $permissions->associate('editor', 'posts.delete', ForbidRule::class);
 
 Resolution rules:
 
-- exact match beats wildcard
-- more specific wildcard beats broader wildcard
-- latest association wins when specificity is equal
-- another actor role may still grant access if one role forbids it
+- exact match beats wildcard;
+- more specific wildcard beats broader wildcard;
+- latest association wins when specificity is equal;
+- another actor role may still grant access if one role forbids it.
 
-### Conflict Resolution (Allow wins over Deny)
+### Conflict Resolution: Allow wins over Deny
 
 The package follows an "Allow wins over Deny" policy. If an actor has multiple roles, access is granted if **at least one** role allows the permission.
 
-Example: If a user has both `user` (allowed `posts.read`) and `banned` (forbidden `posts.read`) roles, the user **will still have access** because the `user` role grants it.
+Example: if a user has both `user` allowed `posts.read` and `banned` forbidden `posts.read`, the user still has access because the `user` role grants it.
 
 ### Wildcard Matching
 
-Permissions use dot-notation and support "greedy" wildcard matching:
+Permissions use dot-notation and support greedy terminal wildcard matching:
 
-- `posts.*` matches `posts.read`, `posts.update`, and also nested resources like `posts.read.history`.
+- `posts.*` matches `posts.read`, `posts.update`, and nested resources like `posts.read.history`.
 - `admin.*` grants access to all sub-resources of any depth.
-- Non-terminal wildcards (e.g., `admin.*.delete`) still require exact segment positioning.
+- Non-terminal wildcards, for example `admin.*.delete`, still require exact segment positioning.
 
 ## Rules
 
@@ -113,65 +150,126 @@ $permissions->associate('user', 'posts.update', OwnPostRule::class);
 
 ## HTTP Integration
 
+### Actor resolution for HTTP requests
+
+`AuthorizeMiddleware` resolves the actor from the current request through `RequestActorProviderInterface`.
+
+The default provider reads this request attribute:
+
+```php
+'rbac' => [
+    'request_actor_attribute' => 'sirix.authentication.actor',
+]
+```
+
+This default matches `sirix/mezzio-authentication`, which stores the authenticated actor in `sirix.authentication.actor`.
+
+If the request attribute contains an RBAC `ActorInterface`, it is used directly. If it contains an authentication-like object with `getRoles()`, it is adapted to an RBAC actor. Missing or invalid actor values fall back to `GuestActor`.
+
+`ContainerActorProvider` is still available for non-request usage through `GuardInterface`, but it should not be used to resolve the current HTTP user.
+
+### Metadata resolution
+
+`AuthorizeMiddleware` resolves permission metadata in this order:
+
+1. request attribute `sirix.rbac.permission`;
+2. matched route option `sirix.rbac.permission`;
+3. if missing or empty, pass through without authorization.
+
+Context follows the same order:
+
+1. request attribute `sirix.rbac.context`;
+2. matched route option `sirix.rbac.context`;
+3. empty array.
+
+Context values map request attributes into rule context:
+
+```php
+[
+    'postId' => 'id', // context['postId'] = $request->getAttribute('id')
+]
+```
+
 ### With standard Mezzio routing
 
-Register `AuthorizeMiddleware` in your route pipeline and set permission as a request attribute. You can do this by passing an array of middleware to the route. Using `RbacAttribute` enum ensures your code is decoupled from the `#[Can]` attribute:
+Register `AuthorizeMiddleware` in your route pipeline and set permission/context as route options:
 
 ```php
 use Sirix\Mezzio\Rbac\Middleware\AuthorizeMiddleware;
 use Sirix\Mezzio\Rbac\RbacAttribute;
 
-    $app->post('/posts/:id',
-        [
-            AuthorizeMiddleware::class,
-            \Handler\PostHandler::class,
-        ],
-        'post.update')
-        ->setOptions([
-            'defaults' => [
-                RbacAttribute::Permission->value => 'posts.update',
-                RbacAttribute::Context->value => ['post' => 'id'],
-            ],
-        ]);
+$app->post('/posts/:id', [
+    AuthorizeMiddleware::class,
+    PostHandler::class,
+], 'post.update')->setOptions([
+    RbacAttribute::Permission->value => 'posts.update',
+    RbacAttribute::Context->value => ['postId' => 'id'],
+]);
 ```
 
-Or if you use global `AuthorizeMiddleware`, you can set attributes on the route:
+You can also set request attributes before `AuthorizeMiddleware` runs. Request attributes take precedence over route options.
+
+### With `sirix/mezzio-routing-attributes`
+
+When used with `sirix/mezzio-routing-attributes:^1.0`, `#[Can]` implements `RouteAttributeModifierInterface`. It injects `AuthorizeMiddleware` into the route pipeline and stores permission/context in route options.
 
 ```php
-use Sirix\Mezzio\Rbac\RbacAttribute;
-
-$app->post('/posts/:id', PostHandler::class, 'post.update')
-    ->setOptions([
-        'defaults' => [
-            RbacAttribute::Permission->value => 'posts.update',
-        ],
-    ]);
-```
-
-### With `sirix/mezzio-routing-attributes` (Optional)
-
-When used together with `sirix/mezzio-routing-attributes`, the provided attribute (like `#[Can]`) implements `RouteAttributeModifierInterface`, which is processed during route extraction. This automatically injects `AuthorizeMiddleware` into the route pipeline and passes permission/context as request defaults:
-
-```php
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Sirix\Mezzio\Rbac\Attribute\Can;
 use Sirix\Mezzio\Routing\Attributes\Attribute\Post;
 
 #[Post('/posts/:id', name: 'post.update')]
-#[Can('posts.update', ['post' => 'id'])]
+#[Can('posts.update', ['postId' => 'id'])]
 final class PostHandler implements RequestHandlerInterface
 {
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        // ...
+        // Authorization has already run before the handler.
     }
 }
 ```
 
-No manual middleware registration is needed.
+No manual middleware registration is needed for routes discovered by `sirix/mezzio-routing-attributes`.
 
-### Manual authorization
+## Integration with `sirix/mezzio-authentication`
 
-You can also authorize from services or handlers directly:
+`sirix/mezzio-authentication` writes the current actor to request attribute `sirix.authentication.actor`. RBAC uses that attribute by default, so the usual route pipeline is:
+
+```text
+AuthenticateMiddleware
+  -> request attribute sirix.authentication.actor
+  -> AuthorizeMiddleware
+  -> RequestGuard
+  -> permission map/rules
+```
+
+With attributes:
+
+```php
+use Sirix\Mezzio\Authentication\Attribute\Authenticated;
+use Sirix\Mezzio\Rbac\Attribute\Can;
+use Sirix\Mezzio\Routing\Attributes\Attribute\Get;
+
+#[Get('/admin', name: 'admin')]
+#[Authenticated]
+#[Can('admin.access')]
+final class AdminHandler implements RequestHandlerInterface
+{
+    // ...
+}
+```
+
+Expected behavior:
+
+- anonymous user is stopped by authentication;
+- authenticated non-admin user receives `403`;
+- authenticated admin user receives `200`.
+
+## Manual authorization from services
+
+For services without a request, use `GuardInterface`:
 
 ```php
 use Sirix\Mezzio\Rbac\Contract\GuardInterface;
@@ -201,20 +299,18 @@ Default implementation:
 
 - `Sirix\Mezzio\Rbac\InMemoryPermissionStore`
 
-That means later adapters can replace storage without changing the guard API.
+Later adapters can replace storage without changing the guard API.
 
 ## Extensibility
 
-The package is built on PSR-compliant and internal contracts, allowing you to swap almost any component.
+### Custom non-request actor provider
 
-### Custom Actor Provider
-
-By default, the package uses `ActorProviderFactory` which creates an `ActorProvider` with a `GuestActor`. In a real application, you'll likely want to fetch the current user from your authentication service:
+Use `ActorProviderInterface` for non-request authorization through `GuardInterface`:
 
 ```php
+use Sirix\Mezzio\Rbac\Actor\Actor;
 use Sirix\Mezzio\Rbac\Contract\ActorInterface;
 use Sirix\Mezzio\Rbac\Contract\ActorProviderInterface;
-use Sirix\Mezzio\Rbac\Actor\Actor;
 
 final readonly class MyActorProvider implements ActorProviderInterface
 {
@@ -223,8 +319,29 @@ final readonly class MyActorProvider implements ActorProviderInterface
     public function getActor(): ActorInterface
     {
         $user = $this->auth->getIdentity();
-        
-        return new Actor($user?->getRoles() ?? []);
+
+        return new Actor($user?->getRoles() ?? ['guest']);
+    }
+}
+```
+
+### Custom request actor provider
+
+Use `RequestActorProviderInterface` for HTTP authorization through `RequestGuardInterface` / `AuthorizeMiddleware`:
+
+```php
+use Psr\Http\Message\ServerRequestInterface;
+use Sirix\Mezzio\Rbac\Actor\Actor;
+use Sirix\Mezzio\Rbac\Contract\ActorInterface;
+use Sirix\Mezzio\Rbac\Contract\RequestActorProviderInterface;
+
+final readonly class MyRequestActorProvider implements RequestActorProviderInterface
+{
+    public function getActor(ServerRequestInterface $request): ActorInterface
+    {
+        $user = $request->getAttribute('user');
+
+        return new Actor($user?->roles() ?? ['guest']);
     }
 }
 ```
@@ -234,43 +351,45 @@ Register it in your dependencies:
 ```php
 'dependencies' => [
     'factories' => [
-        ActorProviderInterface::class => MyActorProviderFactory::class,
+        RequestActorProviderInterface::class => MyRequestActorProviderFactory::class,
     ],
 ],
 ```
 
 ### Custom Permission Store
 
-While `InMemoryPermissionStore` is great for testing or small apps with config-based RBAC, you can implement `PermissionStoreInterface` to load permissions from a Database or Redis:
+Implement `PermissionStoreInterface` to load permissions from a database, cache, or another source:
 
 ```php
-use Sirix\Mezzio\Rbac\Contract\PermissionStoreInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionAssociationInterface;
+use Sirix\Mezzio\Rbac\Contract\PermissionStoreInterface;
 
 final readonly class DatabasePermissionStore implements PermissionStoreInterface
 {
-    public function __construct(private PDO $pdo) {}
-
     public function associationsForRole(string $role): array
     {
-        // Fetch from DB and map to PermissionAssociation objects
+        // Fetch from DB and map to PermissionAssociation objects.
     }
-    
+
     // ... implement other methods
 }
 ```
 
 ### Custom Rules
 
-As shown in the [Rules](#rules) section, you can implement `RuleInterface` to add dynamic logic to your permissions. Rules are resolved via the `RuleResolver`, which by default uses the PSR Container to instantiate rule classes.
+As shown in the [Rules](#rules) section, implement `RuleInterface` to add dynamic logic to permissions. Rules are resolved through `RuleResolver`, which can use the PSR-11 container or instantiate rule classes directly.
 
 ## Main Components
 
-- `Guard`
+- `GuardInterface` / `Guard`
+- `RequestGuardInterface` / `RequestGuard`
+- `ActorProviderInterface`
+- `RequestActorProviderInterface`
+- `RequestAttributeActorProvider`
 - `Permissions`
 - `PermissionMatcher`
 - `RuleResolver`
 - `InMemoryPermissionStore`
 - `AuthorizeMiddleware`
-- `RbacAttribute` (Enum for request attributes)
+- `RbacAttribute`
 - `#[Can(...)]`

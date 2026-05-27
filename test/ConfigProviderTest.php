@@ -7,12 +7,15 @@ namespace SirixTest\Mezzio\Rbac;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Sirix\Mezzio\Rbac\Actor\GuestActor;
+use Sirix\Mezzio\Rbac\AuthorizationEvaluator;
 use Sirix\Mezzio\Rbac\ConfigProvider;
 use Sirix\Mezzio\Rbac\Contract\ActorProviderInterface;
 use Sirix\Mezzio\Rbac\Contract\GuardInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionMapInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionsInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionStoreInterface;
+use Sirix\Mezzio\Rbac\Contract\RequestActorProviderInterface;
+use Sirix\Mezzio\Rbac\Contract\RequestGuardInterface;
 use Sirix\Mezzio\Rbac\Extractor\CanAttributeExtractor;
 use Sirix\Mezzio\Rbac\InMemoryPermissionStore;
 use Sirix\Mezzio\Rbac\Middleware\AuthorizeMiddleware;
@@ -40,6 +43,8 @@ final class ConfigProviderTest extends TestCase
         $dependencies = $provider->getDependencies();
 
         self::assertArrayHasKey(GuardInterface::class, $dependencies['factories']);
+        self::assertArrayHasKey(RequestGuardInterface::class, $dependencies['factories']);
+        self::assertArrayHasKey(AuthorizationEvaluator::class, $dependencies['factories']);
     }
 
     #[Test]
@@ -82,6 +87,7 @@ final class ConfigProviderTest extends TestCase
         $dependencies = $provider->getDependencies();
 
         self::assertArrayHasKey(ActorProviderInterface::class, $dependencies['factories']);
+        self::assertArrayHasKey(RequestActorProviderInterface::class, $dependencies['factories']);
     }
 
     #[Test]

@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - Unreleased
+
+### Added
+- Added request-aware authorization through `RequestGuardInterface` and `RequestGuard`.
+- Added request actor resolution through `RequestActorProviderInterface` and `RequestAttributeActorProvider`.
+- Added `GenericActorAdapter` for authentication-like actors that expose `getRoles()`.
+- Added a shared `AuthorizationEvaluator` used by both `Guard` and `RequestGuard`.
+
+### Changed
+- `AuthorizeMiddleware` now uses `RequestGuardInterface` so HTTP authorization uses the current request actor.
+- `AuthorizeMiddleware` now resolves RBAC metadata from request attributes first and matched route options second.
+- Updated routing integration dependencies to the stable `sirix/mezzio-routing-contracts:^1.0` and `sirix/mezzio-routing-attributes:^1.0` line.
+- Moved `mezzio/mezzio-router` to runtime dependencies because `AuthorizeMiddleware` reads `RouteResult` metadata.
+- Removed pre-1.0 stability metadata from `composer.json`.
+- Updated README for stable request-aware HTTP authorization and `sirix/mezzio-authentication` integration.
+
+### Fixed
+- Fixed `#[Can]` authorization being skipped when permission metadata is stored in Mezzio route options.
+- Fixed HTTP authorization using a container/static/guest actor instead of the actor stored on the current request.
+
+### Upgrade Notes
+- If you instantiate `AuthorizeMiddleware` manually, inject `RequestGuardInterface` instead of `GuardInterface`.
+- `GuardInterface` remains available for non-HTTP authorization and keeps request-independent semantics.
+
 ## [0.1.2] - 2026-05-11
 
 ### Fixed
