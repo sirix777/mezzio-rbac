@@ -14,7 +14,7 @@ final class GenericActorAdapterTest extends TestCase
     #[Test]
     public function implementsActorInterface(): void
     {
-        $adapter = new GenericActorAdapter(new class {
+        $genericActorAdapter = new GenericActorAdapter(new class {
             /**
              * @return list<string>
              */
@@ -24,13 +24,13 @@ final class GenericActorAdapterTest extends TestCase
             }
         });
 
-        self::assertInstanceOf(ActorInterface::class, $adapter);
+        self::assertInstanceOf(ActorInterface::class, $genericActorAdapter);
     }
 
     #[Test]
     public function exposesStringRolesFromGenericActor(): void
     {
-        $adapter = new GenericActorAdapter(new class {
+        $genericActorAdapter = new GenericActorAdapter(new class {
             /**
              * @return list<string>
              */
@@ -40,13 +40,13 @@ final class GenericActorAdapterTest extends TestCase
             }
         });
 
-        self::assertSame(['admin', 'editor'], $adapter->getRoles());
+        self::assertSame(['admin', 'editor'], $genericActorAdapter->getRoles());
     }
 
     #[Test]
     public function filtersInvalidRoleValuesAndNormalizesKeys(): void
     {
-        $adapter = new GenericActorAdapter(new class {
+        $genericActorAdapter = new GenericActorAdapter(new class {
             /**
              * @return array<int, mixed>
              */
@@ -56,19 +56,19 @@ final class GenericActorAdapterTest extends TestCase
             }
         });
 
-        self::assertSame(['admin', 'editor'], $adapter->getRoles());
+        self::assertSame(['admin', 'editor'], $genericActorAdapter->getRoles());
     }
 
     #[Test]
     public function returnsEmptyRolesForInvalidRolePayload(): void
     {
-        $adapter = new GenericActorAdapter(new class {
+        $genericActorAdapter = new GenericActorAdapter(new class {
             public function getRoles(): string
             {
                 return 'admin';
             }
         });
 
-        self::assertSame([], $adapter->getRoles());
+        self::assertSame([], $genericActorAdapter->getRoles());
     }
 }

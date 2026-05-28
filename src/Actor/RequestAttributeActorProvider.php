@@ -15,9 +15,9 @@ final readonly class RequestAttributeActorProvider implements RequestActorProvid
 {
     public function __construct(private string $attributeName, private ActorInterface $guestActor) {}
 
-    public function getActor(ServerRequestInterface $request): ActorInterface
+    public function getActor(ServerRequestInterface $serverRequest): ActorInterface
     {
-        $actor = $request->getAttribute($this->attributeName);
+        $actor = $serverRequest->getAttribute($this->attributeName);
 
         if ($actor instanceof ActorInterface) {
             return $actor;

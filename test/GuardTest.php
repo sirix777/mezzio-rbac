@@ -26,9 +26,9 @@ final class GuardTest extends TestCase
 
     protected function setUp(): void
     {
-        $matcher = new PermissionMatcher();
-        $store = new InMemoryPermissionStore();
-        $this->permissions = new Permissions($matcher, $store);
+        $permissionMatcher = new PermissionMatcher();
+        $inMemoryPermissionStore = new InMemoryPermissionStore();
+        $this->permissions = new Permissions($permissionMatcher, $inMemoryPermissionStore);
 
         $container = $this->createMock(ContainerInterface::class);
         $container->method('has')->willReturn(false);

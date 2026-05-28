@@ -34,8 +34,8 @@ final class ConfigProviderTest extends TestCase
     #[Test]
     public function returnsDependenciesArray(): void
     {
-        $provider = new ConfigProvider();
-        $config = $provider();
+        $configProvider = new ConfigProvider();
+        $config = $configProvider();
 
         self::assertArrayHasKey('dependencies', $config);
         self::assertArrayHasKey('factories', $config['dependencies']);
@@ -45,8 +45,8 @@ final class ConfigProviderTest extends TestCase
     #[Test]
     public function registersGuardFactory(): void
     {
-        $provider = new ConfigProvider();
-        $dependencies = $provider->getDependencies();
+        $configProvider = new ConfigProvider();
+        $dependencies = $configProvider->getDependencies();
 
         self::assertArrayHasKey(GuardInterface::class, $dependencies['factories']);
         self::assertArrayHasKey(RequestGuardInterface::class, $dependencies['factories']);
@@ -56,8 +56,8 @@ final class ConfigProviderTest extends TestCase
     #[Test]
     public function registersPermissionsFactory(): void
     {
-        $provider = new ConfigProvider();
-        $dependencies = $provider->getDependencies();
+        $configProvider = new ConfigProvider();
+        $dependencies = $configProvider->getDependencies();
 
         self::assertArrayHasKey(PermissionsInterface::class, $dependencies['factories']);
         self::assertSame(PermissionsInterface::class, $dependencies['aliases'][PermissionLookupInterface::class]);
@@ -66,8 +66,8 @@ final class ConfigProviderTest extends TestCase
     #[Test]
     public function registersPermissionStoreAsInvokableAlias(): void
     {
-        $provider = new ConfigProvider();
-        $dependencies = $provider->getDependencies();
+        $configProvider = new ConfigProvider();
+        $dependencies = $configProvider->getDependencies();
 
         self::assertSame(InMemoryPermissionStore::class, $dependencies['aliases'][PermissionStoreInterface::class]);
         self::assertArrayHasKey(InMemoryPermissionStore::class, $dependencies['invokables']);
@@ -76,8 +76,8 @@ final class ConfigProviderTest extends TestCase
     #[Test]
     public function registersInvokables(): void
     {
-        $provider = new ConfigProvider();
-        $dependencies = $provider->getDependencies();
+        $configProvider = new ConfigProvider();
+        $dependencies = $configProvider->getDependencies();
 
         self::assertArrayHasKey(PermissionMatcher::class, $dependencies['invokables']);
         self::assertArrayHasKey(GuestActor::class, $dependencies['invokables']);
@@ -89,8 +89,8 @@ final class ConfigProviderTest extends TestCase
     #[Test]
     public function registersActorProvider(): void
     {
-        $provider = new ConfigProvider();
-        $dependencies = $provider->getDependencies();
+        $configProvider = new ConfigProvider();
+        $dependencies = $configProvider->getDependencies();
 
         self::assertArrayHasKey(ActorProviderInterface::class, $dependencies['factories']);
         self::assertArrayHasKey(RequestActorProviderInterface::class, $dependencies['factories']);
@@ -99,8 +99,8 @@ final class ConfigProviderTest extends TestCase
     #[Test]
     public function registersRules(): void
     {
-        $provider = new ConfigProvider();
-        $dependencies = $provider->getDependencies();
+        $configProvider = new ConfigProvider();
+        $dependencies = $configProvider->getDependencies();
 
         self::assertArrayHasKey(AllowRule::class, $dependencies['invokables']);
         self::assertArrayHasKey(ForbidRule::class, $dependencies['invokables']);
@@ -109,8 +109,8 @@ final class ConfigProviderTest extends TestCase
     #[Test]
     public function registersMiddleware(): void
     {
-        $provider = new ConfigProvider();
-        $dependencies = $provider->getDependencies();
+        $configProvider = new ConfigProvider();
+        $dependencies = $configProvider->getDependencies();
 
         self::assertArrayHasKey(AuthorizeMiddleware::class, $dependencies['factories']);
     }
@@ -118,26 +118,26 @@ final class ConfigProviderTest extends TestCase
     #[Test]
     public function configuredServiceManagerResolvesCoreServices(): void
     {
-        $container = new ServiceManager((new ConfigProvider())->getDependencies());
+        $serviceManager = new ServiceManager((new ConfigProvider())->getDependencies());
 
-        self::assertInstanceOf(InMemoryPermissionStore::class, $container->get(PermissionStoreInterface::class));
-        self::assertInstanceOf(Permissions::class, $container->get(PermissionsInterface::class));
+        self::assertInstanceOf(InMemoryPermissionStore::class, $serviceManager->get(PermissionStoreInterface::class));
+        self::assertInstanceOf(Permissions::class, $serviceManager->get(PermissionsInterface::class));
         self::assertSame(
-            $container->get(PermissionsInterface::class),
-            $container->get(PermissionLookupInterface::class),
+            $serviceManager->get(PermissionsInterface::class),
+            $serviceManager->get(PermissionLookupInterface::class),
         );
-        self::assertInstanceOf(RuleResolver::class, $container->get(RuleResolver::class));
-        self::assertInstanceOf(AuthorizationEvaluator::class, $container->get(AuthorizationEvaluator::class));
-        self::assertInstanceOf(RequestGuard::class, $container->get(RequestGuardInterface::class));
-        self::assertInstanceOf(AuthorizeMiddleware::class, $container->get(AuthorizeMiddleware::class));
+        self::assertInstanceOf(RuleResolver::class, $serviceManager->get(RuleResolver::class));
+        self::assertInstanceOf(AuthorizationEvaluator::class, $serviceManager->get(AuthorizationEvaluator::class));
+        self::assertInstanceOf(RequestGuard::class, $serviceManager->get(RequestGuardInterface::class));
+        self::assertInstanceOf(AuthorizeMiddleware::class, $serviceManager->get(AuthorizeMiddleware::class));
     }
 
     #[Test]
     public function configuredContainerSharesPermissionsBetweenWriteAndReadContracts(): void
     {
-        $container = new ServiceManager((new ConfigProvider())->getDependencies());
+        $serviceManager = new ServiceManager((new ConfigProvider())->getDependencies());
 
-        $permissions = $container->get(PermissionsInterface::class);
+        $permissions = $serviceManager->get(PermissionsInterface::class);
         self::assertInstanceOf(PermissionsInterface::class, $permissions);
         $permissions->addRole('admin');
         $permissions->associate('admin', 'posts.read');
@@ -150,7 +150,7 @@ final class ConfigProviderTest extends TestCase
             })
         ;
 
-        $guard = $container->get(RequestGuardInterface::class);
+        $guard = $serviceManager->get(RequestGuardInterface::class);
         self::assertInstanceOf(RequestGuardInterface::class, $guard);
         self::assertTrue($guard->allows($request, 'posts.read'));
     }

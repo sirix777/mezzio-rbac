@@ -20,8 +20,8 @@ final class ContainerActorProviderTest extends TestCase
         $container->method('has')->with(ActorInterface::class)->willReturn(false);
         $guestActor = new GuestActor();
 
-        $provider = new ContainerActorProvider($container, $guestActor);
-        $actor = $provider->getActor();
+        $containerActorProvider = new ContainerActorProvider($container, $guestActor);
+        $actor = $containerActorProvider->getActor();
 
         self::assertSame(['guest'], $actor->getRoles());
     }
@@ -36,8 +36,8 @@ final class ContainerActorProviderTest extends TestCase
         $container->method('has')->with(ActorInterface::class)->willReturn(true);
         $container->method('get')->with(ActorInterface::class)->willReturn($actor);
 
-        $provider = new ContainerActorProvider($container, new GuestActor());
-        $result = $provider->getActor();
+        $containerActorProvider = new ContainerActorProvider($container, new GuestActor());
+        $result = $containerActorProvider->getActor();
 
         self::assertSame(['admin'], $result->getRoles());
     }
@@ -49,8 +49,8 @@ final class ContainerActorProviderTest extends TestCase
         $container->method('has')->with(ActorInterface::class)->willReturn(true);
         $container->method('get')->with(ActorInterface::class)->willReturn('not-an-actor');
 
-        $provider = new ContainerActorProvider($container, new GuestActor());
-        $actor = $provider->getActor();
+        $containerActorProvider = new ContainerActorProvider($container, new GuestActor());
+        $actor = $containerActorProvider->getActor();
 
         self::assertSame(['guest'], $actor->getRoles());
     }

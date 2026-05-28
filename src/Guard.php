@@ -10,14 +10,14 @@ use Sirix\Mezzio\Rbac\Exception\AuthorizationException;
 
 final readonly class Guard implements GuardInterface
 {
-    public function __construct(private ActorProviderInterface $actorProvider, private AuthorizationEvaluator $evaluator) {}
+    public function __construct(private ActorProviderInterface $actorProvider, private AuthorizationEvaluator $authorizationEvaluator) {}
 
     /**
      * @param array<string, mixed> $context
      */
     public function allows(string $permission, array $context = []): bool
     {
-        return $this->evaluator->allows(
+        return $this->authorizationEvaluator->allows(
             $this->actorProvider->getActor(),
             $permission,
             $context,

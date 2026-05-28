@@ -14,17 +14,17 @@ use SirixTest\Mezzio\Rbac\TestAsset\MethodLevelCanHandler;
 
 final class CanAttributeExtractorTest extends TestCase
 {
-    private CanAttributeExtractor $extractor;
+    private CanAttributeExtractor $canAttributeExtractor;
 
     protected function setUp(): void
     {
-        $this->extractor = new CanAttributeExtractor();
+        $this->canAttributeExtractor = new CanAttributeExtractor();
     }
 
     #[Test]
     public function extractsClassLevelCanAttribute(): void
     {
-        $attributes = $this->extractor->extractForClass(ClassLevelCanHandler::class);
+        $attributes = $this->canAttributeExtractor->extractForClass(ClassLevelCanHandler::class);
 
         self::assertCount(1, $attributes);
         self::assertInstanceOf(Can::class, $attributes[0]);
@@ -34,7 +34,7 @@ final class CanAttributeExtractorTest extends TestCase
     #[Test]
     public function extractsMethodLevelCanAttribute(): void
     {
-        $attributes = $this->extractor->extractForMethod(MethodLevelCanHandler::class, 'handle');
+        $attributes = $this->canAttributeExtractor->extractForMethod(MethodLevelCanHandler::class, 'handle');
 
         self::assertCount(1, $attributes);
         self::assertSame('posts.read', $attributes[0]->permission);
@@ -43,7 +43,7 @@ final class CanAttributeExtractorTest extends TestCase
     #[Test]
     public function extractsMethodLevelCanWithContext(): void
     {
-        $attributes = $this->extractor->extractForMethod(MethodLevelCanHandler::class, 'update');
+        $attributes = $this->canAttributeExtractor->extractForMethod(MethodLevelCanHandler::class, 'update');
 
         self::assertCount(1, $attributes);
         self::assertSame('posts.update', $attributes[0]->permission);
@@ -53,7 +53,7 @@ final class CanAttributeExtractorTest extends TestCase
     #[Test]
     public function returnsEmptyArrayForMethodWithoutCan(): void
     {
-        $attributes = $this->extractor->extractForMethod(MethodLevelCanHandler::class, 'delete');
+        $attributes = $this->canAttributeExtractor->extractForMethod(MethodLevelCanHandler::class, 'delete');
 
         self::assertCount(0, $attributes);
     }
@@ -61,7 +61,7 @@ final class CanAttributeExtractorTest extends TestCase
     #[Test]
     public function methodLevelOverridesClassLevel(): void
     {
-        $methodAttributes = $this->extractor->extractForMethod(ClassAndMethodLevelCanHandler::class, 'create');
+        $methodAttributes = $this->canAttributeExtractor->extractForMethod(ClassAndMethodLevelCanHandler::class, 'create');
 
         self::assertCount(1, $methodAttributes);
         self::assertSame('posts.create', $methodAttributes[0]->permission);
@@ -70,7 +70,7 @@ final class CanAttributeExtractorTest extends TestCase
     #[Test]
     public function fallsBackToClassLevelWhenMethodHasNoCan(): void
     {
-        $methodAttributes = $this->extractor->extractForMethod(ClassAndMethodLevelCanHandler::class, 'list');
+        $methodAttributes = $this->canAttributeExtractor->extractForMethod(ClassAndMethodLevelCanHandler::class, 'list');
 
         self::assertCount(1, $methodAttributes);
         self::assertSame('posts.list', $methodAttributes[0]->permission);
@@ -79,8 +79,8 @@ final class CanAttributeExtractorTest extends TestCase
     #[Test]
     public function cachingWorks(): void
     {
-        $first = $this->extractor->extractForClass(ClassLevelCanHandler::class);
-        $second = $this->extractor->extractForClass(ClassLevelCanHandler::class);
+        $first = $this->canAttributeExtractor->extractForClass(ClassLevelCanHandler::class);
+        $second = $this->canAttributeExtractor->extractForClass(ClassLevelCanHandler::class);
 
         self::assertSame($first, $second);
     }

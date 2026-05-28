@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added regression coverage for real `ServiceManager` wiring, shared permission state between read/write contracts, and multi-role authorization evaluation.
 
 ### Changed
+- Factories now use `sirix/container-resolver` for strict service and configuration validation.
 - `AuthorizeMiddleware` now uses `RequestGuardInterface` so HTTP authorization uses the current request actor.
 - `AuthorizeMiddleware` now resolves RBAC metadata from request attributes first and matched route options second.
 - Renamed the read-only permission lookup contract from `PermissionMapInterface` to `PermissionLookupInterface`.

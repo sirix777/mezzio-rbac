@@ -24,16 +24,16 @@ use Sirix\Mezzio\Rbac\RuleResolver;
 
 final class RequestGuardTest extends TestCase
 {
-    private RequestGuard $guard;
+    private RequestGuard $requestGuard;
     private Permissions $permissions;
-    private ServerRequestInterface $request;
+    private ServerRequestInterface $serverRequest;
 
     protected function setUp(): void
     {
-        $matcher = new PermissionMatcher();
-        $store = new InMemoryPermissionStore();
-        $this->permissions = new Permissions($matcher, $store);
-        $this->request = $this->createMock(ServerRequestInterface::class);
+        $permissionMatcher = new PermissionMatcher();
+        $inMemoryPermissionStore = new InMemoryPermissionStore();
+        $this->permissions = new Permissions($permissionMatcher, $inMemoryPermissionStore);
+        $this->serverRequest = $this->createMock(ServerRequestInterface::class);
 
         $container = $this->createMock(ContainerInterface::class);
         $container->method('has')->willReturn(false);
@@ -45,9 +45,9 @@ final class RequestGuardTest extends TestCase
 
         $ruleResolver = new RuleResolver($container, new AllowRule());
         $actorProvider = $this->createMock(RequestActorProviderInterface::class);
-        $actorProvider->method('getActor')->with($this->request)->willReturn(new Actor(['admin']));
+        $actorProvider->method('getActor')->with($this->serverRequest)->willReturn(new Actor(['admin']));
 
-        $this->guard = new RequestGuard(
+        $this->requestGuard = new RequestGuard(
             $actorProvider,
             new AuthorizationEvaluator($this->permissions, $ruleResolver),
         );
@@ -59,7 +59,7 @@ final class RequestGuardTest extends TestCase
         $this->permissions->addRole('admin');
         $this->permissions->associate('admin', 'posts.*');
 
-        self::assertTrue($this->guard->allows($this->request, 'posts.read'));
+        self::assertTrue($this->requestGuard->allows($this->serverRequest, 'posts.read'));
     }
 
     #[Test]
@@ -68,8 +68,8 @@ final class RequestGuardTest extends TestCase
         $this->permissions->addRole('admin');
         $this->permissions->associate('admin', 'posts.read');
 
-        self::assertFalse($this->guard->allows($this->request, 'posts.delete'));
-        self::assertTrue($this->guard->denies($this->request, 'posts.delete'));
+        self::assertFalse($this->requestGuard->allows($this->serverRequest, 'posts.delete'));
+        self::assertTrue($this->requestGuard->denies($this->serverRequest, 'posts.delete'));
     }
 
     #[Test]
@@ -79,7 +79,7 @@ final class RequestGuardTest extends TestCase
         $this->permissions->associate('admin', 'posts.read');
 
         $this->expectException(AuthorizationException::class);
-        $this->guard->authorize($this->request, 'posts.delete');
+        $this->requestGuard->authorize($this->serverRequest, 'posts.delete');
     }
 
     #[Test]
@@ -89,8 +89,8 @@ final class RequestGuardTest extends TestCase
         $this->permissions->associate('admin', 'posts.*', AllowRule::class);
         $this->permissions->associate('admin', 'posts.delete', ForbidRule::class);
 
-        self::assertTrue($this->guard->allows($this->request, 'posts.read'));
-        self::assertFalse($this->guard->allows($this->request, 'posts.delete'));
+        self::assertTrue($this->requestGuard->allows($this->serverRequest, 'posts.read'));
+        self::assertFalse($this->requestGuard->allows($this->serverRequest, 'posts.delete'));
     }
 
     #[Test]
@@ -104,7 +104,7 @@ final class RequestGuardTest extends TestCase
             }
         });
 
-        self::assertTrue($this->guard->allows($this->request, 'posts.update', ['postId' => '123']));
-        self::assertFalse($this->guard->allows($this->request, 'posts.update', ['postId' => '456']));
+        self::assertTrue($this->requestGuard->allows($this->serverRequest, 'posts.update', ['postId' => '123']));
+        self::assertFalse($this->requestGuard->allows($this->serverRequest, 'posts.update', ['postId' => '456']));
     }
 }

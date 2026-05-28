@@ -29,9 +29,9 @@ final class AuthorizeMiddlewareTest extends TestCase
 
         $response = $this->createMock(ResponseInterface::class);
         $request = $this->request();
-        $middleware = new AuthorizeMiddleware($guard);
+        $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
-        self::assertSame($response, $middleware->process($request, $this->handlerReturning($response)));
+        self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
     }
 
     #[Test]
@@ -46,9 +46,9 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard->expects(self::once())->method('authorize')->with($request, 'posts.read', []);
 
         $response = $this->createMock(ResponseInterface::class);
-        $middleware = new AuthorizeMiddleware($guard);
+        $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
-        self::assertSame($response, $middleware->process($request, $this->handlerReturning($response)));
+        self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
     }
 
     #[Test]
@@ -63,9 +63,9 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard->expects(self::once())->method('authorize')->with($request, 'admin.access', []);
 
         $response = $this->createMock(ResponseInterface::class);
-        $middleware = new AuthorizeMiddleware($guard);
+        $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
-        self::assertSame($response, $middleware->process($request, $this->handlerReturning($response)));
+        self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
     }
 
     #[Test]
@@ -82,9 +82,9 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard->expects(self::once())->method('authorize')->with($request, 'posts.read', []);
 
         $response = $this->createMock(ResponseInterface::class);
-        $middleware = new AuthorizeMiddleware($guard);
+        $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
-        self::assertSame($response, $middleware->process($request, $this->handlerReturning($response)));
+        self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
     }
 
     #[Test]
@@ -116,9 +116,9 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard->expects(self::once())->method('authorize')->with($request, 'posts.update', ['postId' => '123']);
 
         $response = $this->createMock(ResponseInterface::class);
-        $middleware = new AuthorizeMiddleware($guard);
+        $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
-        self::assertSame($response, $middleware->process($request, $this->handlerReturning($response)));
+        self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
     }
 
     #[Test]
@@ -133,9 +133,9 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard->expects(self::once())->method('authorize')->with($request, 'posts.update', ['postId' => '123']);
 
         $response = $this->createMock(ResponseInterface::class);
-        $middleware = new AuthorizeMiddleware($guard);
+        $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
-        self::assertSame($response, $middleware->process($request, $this->handlerReturning($response)));
+        self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
     }
 
     #[Test]
@@ -154,9 +154,9 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard->expects(self::once())->method('authorize')->with($request, 'posts.update', ['postId' => 'request-id']);
 
         $response = $this->createMock(ResponseInterface::class);
-        $middleware = new AuthorizeMiddleware($guard);
+        $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
-        self::assertSame($response, $middleware->process($request, $this->handlerReturning($response)));
+        self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
     }
 
     #[Test]
@@ -170,9 +170,9 @@ final class AuthorizeMiddlewareTest extends TestCase
         ]);
 
         $response = $this->createMock(ResponseInterface::class);
-        $middleware = new AuthorizeMiddleware($guard);
+        $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
-        self::assertSame($response, $middleware->process($request, $this->handlerReturning($response)));
+        self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
     }
 
     /**

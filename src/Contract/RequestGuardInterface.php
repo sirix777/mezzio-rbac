@@ -12,17 +12,17 @@ interface RequestGuardInterface
     /**
      * @param array<string, mixed> $context
      */
-    public function allows(ServerRequestInterface $request, string $permission, array $context = []): bool;
+    public function allows(ServerRequestInterface $serverRequest, string $permission, array $context = []): bool;
 
     /**
      * @param array<string, mixed> $context
      */
-    public function denies(ServerRequestInterface $request, string $permission, array $context = []): bool;
+    public function denies(ServerRequestInterface $serverRequest, string $permission, array $context = []): bool;
 
     /**
      * @param array<string, mixed> $context
      *
      * @throws AuthorizationException
      */
-    public function authorize(ServerRequestInterface $request, string $permission, array $context = []): void;
+    public function authorize(ServerRequestInterface $serverRequest, string $permission, array $context = []): void;
 }

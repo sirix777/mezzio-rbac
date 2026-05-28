@@ -13,37 +13,37 @@ final class AuthorizationExceptionTest extends TestCase
     #[Test]
     public function defaultValues(): void
     {
-        $exception = new AuthorizationException('posts.read');
+        $authorizationException = new AuthorizationException('posts.read');
 
-        self::assertSame('posts.read', $exception->getPermission());
-        self::assertSame(403, $exception->getStatusCode());
-        self::assertSame('Forbidden', $exception->getMessage());
-        self::assertSame('Forbidden', $exception->getPublicMessage());
-        self::assertSame([], $exception->getHeaders());
+        self::assertSame('posts.read', $authorizationException->getPermission());
+        self::assertSame(403, $authorizationException->getStatusCode());
+        self::assertSame('Forbidden', $authorizationException->getMessage());
+        self::assertSame('Forbidden', $authorizationException->getPublicMessage());
+        self::assertSame([], $authorizationException->getHeaders());
     }
 
     #[Test]
     public function customValues(): void
     {
-        $exception = new AuthorizationException(
+        $authorizationException = new AuthorizationException(
             'posts.delete',
             'Access denied',
             ['X-Custom' => 'value'],
             'You cannot delete this post',
         );
 
-        self::assertSame('posts.delete', $exception->getPermission());
-        self::assertSame(403, $exception->getStatusCode());
-        self::assertSame('Access denied', $exception->getMessage());
-        self::assertSame('You cannot delete this post', $exception->getPublicMessage());
-        self::assertSame(['X-Custom' => 'value'], $exception->getHeaders());
+        self::assertSame('posts.delete', $authorizationException->getPermission());
+        self::assertSame(403, $authorizationException->getStatusCode());
+        self::assertSame('Access denied', $authorizationException->getMessage());
+        self::assertSame('You cannot delete this post', $authorizationException->getPublicMessage());
+        self::assertSame(['X-Custom' => 'value'], $authorizationException->getHeaders());
     }
 
     #[Test]
     public function publicMessageFallsBackToMessage(): void
     {
-        $exception = new AuthorizationException('posts.read', 'Custom message');
+        $authorizationException = new AuthorizationException('posts.read', 'Custom message');
 
-        self::assertSame('Custom message', $exception->getPublicMessage());
+        self::assertSame('Custom message', $authorizationException->getPublicMessage());
     }
 }

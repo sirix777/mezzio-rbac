@@ -20,7 +20,7 @@ use Sirix\Mezzio\Rbac\RuleResolver;
 final class AuthorizationEvaluatorTest extends TestCase
 {
     private Permissions $permissions;
-    private AuthorizationEvaluator $evaluator;
+    private AuthorizationEvaluator $authorizationEvaluator;
 
     protected function setUp(): void
     {
@@ -32,7 +32,7 @@ final class AuthorizationEvaluatorTest extends TestCase
         $container = $this->createMock(ContainerInterface::class);
         $container->method('has')->willReturn(false);
 
-        $this->evaluator = new AuthorizationEvaluator(
+        $this->authorizationEvaluator = new AuthorizationEvaluator(
             $this->permissions,
             new RuleResolver($container, new AllowRule()),
         );
@@ -45,7 +45,7 @@ final class AuthorizationEvaluatorTest extends TestCase
         $this->permissions->addRole('admin');
         $this->permissions->associate('admin', 'posts.read');
 
-        self::assertTrue($this->evaluator->allows(
+        self::assertTrue($this->authorizationEvaluator->allows(
             new Actor(['editor', 'admin']),
             'posts.read',
         ));
@@ -54,7 +54,7 @@ final class AuthorizationEvaluatorTest extends TestCase
     #[Test]
     public function deniesWhenActorHasNoRoles(): void
     {
-        self::assertFalse($this->evaluator->allows(new Actor([]), 'posts.read'));
+        self::assertFalse($this->authorizationEvaluator->allows(new Actor([]), 'posts.read'));
     }
 
     #[Test]
@@ -70,7 +70,7 @@ final class AuthorizationEvaluatorTest extends TestCase
         });
         $this->permissions->associate('admin', 'posts.update');
 
-        self::assertTrue($this->evaluator->allows(
+        self::assertTrue($this->authorizationEvaluator->allows(
             new Actor(['editor', 'admin']),
             'posts.update',
         ));
@@ -87,12 +87,12 @@ final class AuthorizationEvaluatorTest extends TestCase
             }
         });
 
-        self::assertTrue($this->evaluator->allows(
+        self::assertTrue($this->authorizationEvaluator->allows(
             new Actor(['admin']),
             'posts.update',
             ['postId' => '123'],
         ));
-        self::assertFalse($this->evaluator->allows(
+        self::assertFalse($this->authorizationEvaluator->allows(
             new Actor(['admin']),
             'posts.update',
             ['postId' => '456'],

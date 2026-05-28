@@ -8,5 +8,5 @@ use Psr\Http\Message\ServerRequestInterface;
 
 interface RequestActorProviderInterface
 {
-    public function getActor(ServerRequestInterface $request): ActorInterface;
+    public function getActor(ServerRequestInterface $serverRequest): ActorInterface;
 }

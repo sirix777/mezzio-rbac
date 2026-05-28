@@ -28,12 +28,12 @@ final class CanAttributeExtractor
             return $this->cache[$cacheKey];
         }
 
-        $reflection = new ReflectionMethod($className, $methodName);
-        $attributes = $this->extractCanAttributes($reflection);
+        $reflectionMethod = new ReflectionMethod($className, $methodName);
+        $attributes = $this->extractCanAttributes($reflectionMethod);
 
         if ([] === $attributes) {
-            $classReflection = new ReflectionClass($className);
-            $attributes = $this->extractCanAttributes($classReflection);
+            $reflectionClass = new ReflectionClass($className);
+            $attributes = $this->extractCanAttributes($reflectionClass);
         }
 
         return $this->cache[$cacheKey] = $attributes;
@@ -51,9 +51,9 @@ final class CanAttributeExtractor
             return $this->cache[$cacheKey];
         }
 
-        $reflection = new ReflectionClass($className);
+        $reflectionClass = new ReflectionClass($className);
 
-        return $this->cache[$cacheKey] = $this->extractCanAttributes($reflection);
+        return $this->cache[$cacheKey] = $this->extractCanAttributes($reflectionClass);
     }
 
     /**

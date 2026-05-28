@@ -21,33 +21,33 @@ final class RequestAttributeActorProviderTest extends TestCase
         $request = $this->createMock(ServerRequestInterface::class);
         $request->method('getAttribute')->with('actor')->willReturn($actor);
 
-        $provider = new RequestAttributeActorProvider('actor', new GuestActor());
+        $requestAttributeActorProvider = new RequestAttributeActorProvider('actor', new GuestActor());
 
-        self::assertSame($actor, $provider->getActor($request));
+        self::assertSame($actor, $requestAttributeActorProvider->getActor($request));
     }
 
     #[Test]
     public function returnsGuestActorWhenAttributeIsMissing(): void
     {
-        $guest = new GuestActor();
+        $guestActor = new GuestActor();
         $request = $this->createMock(ServerRequestInterface::class);
         $request->method('getAttribute')->with('actor')->willReturn(null);
 
-        $provider = new RequestAttributeActorProvider('actor', $guest);
+        $requestAttributeActorProvider = new RequestAttributeActorProvider('actor', $guestActor);
 
-        self::assertSame($guest, $provider->getActor($request));
+        self::assertSame($guestActor, $requestAttributeActorProvider->getActor($request));
     }
 
     #[Test]
     public function returnsGuestActorWhenAttributeIsNotActorLike(): void
     {
-        $guest = new GuestActor();
+        $guestActor = new GuestActor();
         $request = $this->createMock(ServerRequestInterface::class);
         $request->method('getAttribute')->with('actor')->willReturn('not-an-actor');
 
-        $provider = new RequestAttributeActorProvider('actor', $guest);
+        $requestAttributeActorProvider = new RequestAttributeActorProvider('actor', $guestActor);
 
-        self::assertSame($guest, $provider->getActor($request));
+        self::assertSame($guestActor, $requestAttributeActorProvider->getActor($request));
     }
 
     #[Test]
@@ -66,8 +66,8 @@ final class RequestAttributeActorProviderTest extends TestCase
         $request = $this->createMock(ServerRequestInterface::class);
         $request->method('getAttribute')->with('actor')->willReturn($genericActor);
 
-        $provider = new RequestAttributeActorProvider('actor', new GuestActor());
-        $actor = $provider->getActor($request);
+        $requestAttributeActorProvider = new RequestAttributeActorProvider('actor', new GuestActor());
+        $actor = $requestAttributeActorProvider->getActor($request);
 
         self::assertInstanceOf(GenericActorAdapter::class, $actor);
         self::assertSame(['admin'], $actor->getRoles());

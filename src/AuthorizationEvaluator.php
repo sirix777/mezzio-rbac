@@ -10,7 +10,7 @@ use Sirix\Mezzio\Rbac\Contract\PermissionLookupInterface;
 
 final readonly class AuthorizationEvaluator
 {
-    public function __construct(private PermissionLookupInterface $permissions, private RuleResolver $ruleResolver) {}
+    public function __construct(private PermissionLookupInterface $permissionLookup, private RuleResolver $ruleResolver) {}
 
     /**
      * @param array<string, mixed> $context
@@ -18,7 +18,7 @@ final readonly class AuthorizationEvaluator
     public function allows(ActorInterface $actor, string $permission, array $context = []): bool
     {
         foreach ($actor->getRoles() as $role) {
-            $association = $this->permissions->bestAssociationForRole(
+            $association = $this->permissionLookup->bestAssociationForRole(
                 $role,
                 $permission,
             );

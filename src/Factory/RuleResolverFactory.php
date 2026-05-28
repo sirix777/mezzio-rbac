@@ -4,23 +4,24 @@ declare(strict_types=1);
 
 namespace Sirix\Mezzio\Rbac\Factory;
 
-use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
-use Psr\Container\NotFoundExceptionInterface;
+use Sirix\ContainerResolver\ContainerResolver;
+use Sirix\ContainerResolver\Exception\ResolverException;
 use Sirix\Mezzio\Rbac\Rule\AllowRule;
 use Sirix\Mezzio\Rbac\RuleResolver;
 
 final class RuleResolverFactory
 {
     /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
+     * @throws ResolverException
      */
     public function __invoke(ContainerInterface $container): RuleResolver
     {
+        $containerResolver = ContainerResolver::forFactory($container, self::class);
+
         return new RuleResolver(
             $container,
-            $container->get(AllowRule::class),
+            $containerResolver->get(AllowRule::class),
         );
     }
 }

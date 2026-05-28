@@ -19,7 +19,7 @@ use function is_string;
 
 final readonly class AuthorizeMiddleware implements MiddlewareInterface
 {
-    public function __construct(private RequestGuardInterface $guard) {}
+    public function __construct(private RequestGuardInterface $requestGuard) {}
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
@@ -34,40 +34,40 @@ final readonly class AuthorizeMiddleware implements MiddlewareInterface
             $this->resolveRawContext($request),
         );
 
-        $this->guard->authorize($request, $permission, $context);
+        $this->requestGuard->authorize($request, $permission, $context);
 
         return $handler->handle($request);
     }
 
-    private function resolvePermission(ServerRequestInterface $request): ?string
+    private function resolvePermission(ServerRequestInterface $serverRequest): ?string
     {
         $missing = new stdClass();
-        $permission = $request->getAttribute(RbacAttribute::Permission->value, $missing);
+        $permission = $serverRequest->getAttribute(RbacAttribute::Permission->value, $missing);
 
         if ($permission !== $missing) {
             return is_string($permission) && '' !== $permission ? $permission : null;
         }
 
-        $permission = $this->resolveRouteOption($request, RbacAttribute::Permission->value);
+        $permission = $this->resolveRouteOption($serverRequest, RbacAttribute::Permission->value);
 
         return is_string($permission) && '' !== $permission ? $permission : null;
     }
 
-    private function resolveRawContext(ServerRequestInterface $request): mixed
+    private function resolveRawContext(ServerRequestInterface $serverRequest): mixed
     {
         $missing = new stdClass();
-        $context = $request->getAttribute(RbacAttribute::Context->value, $missing);
+        $context = $serverRequest->getAttribute(RbacAttribute::Context->value, $missing);
 
         if ($context !== $missing) {
             return $context;
         }
 
-        return $this->resolveRouteOption($request, RbacAttribute::Context->value) ?? [];
+        return $this->resolveRouteOption($serverRequest, RbacAttribute::Context->value) ?? [];
     }
 
-    private function resolveRouteOption(ServerRequestInterface $request, string $key): mixed
+    private function resolveRouteOption(ServerRequestInterface $serverRequest, string $key): mixed
     {
-        $routeResult = $request->getAttribute(RouteResult::class);
+        $routeResult = $serverRequest->getAttribute(RouteResult::class);
         if (! $routeResult instanceof RouteResult || ! $routeResult->isSuccess()) {
             return null;
         }
@@ -83,7 +83,7 @@ final readonly class AuthorizeMiddleware implements MiddlewareInterface
     /**
      * @return array<string, mixed>
      */
-    private function resolveContext(ServerRequestInterface $request, mixed $rawContext): array
+    private function resolveContext(ServerRequestInterface $serverRequest, mixed $rawContext): array
     {
         if (! is_array($rawContext)) {
             return [];
@@ -101,7 +101,7 @@ final readonly class AuthorizeMiddleware implements MiddlewareInterface
             }
 
             $contextKey = is_int($key) ? $attribute : $key;
-            $context[$contextKey] = $request->getAttribute($attribute);
+            $context[$contextKey] = $serverRequest->getAttribute($attribute);
         }
 
         return $context;

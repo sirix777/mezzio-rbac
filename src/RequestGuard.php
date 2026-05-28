@@ -11,15 +11,18 @@ use Sirix\Mezzio\Rbac\Exception\AuthorizationException;
 
 final readonly class RequestGuard implements RequestGuardInterface
 {
-    public function __construct(private RequestActorProviderInterface $actorProvider, private AuthorizationEvaluator $evaluator) {}
+    public function __construct(
+        private RequestActorProviderInterface $requestActorProvider,
+        private AuthorizationEvaluator $authorizationEvaluator
+    ) {}
 
     /**
      * @param array<string, mixed> $context
      */
-    public function allows(ServerRequestInterface $request, string $permission, array $context = []): bool
+    public function allows(ServerRequestInterface $serverRequest, string $permission, array $context = []): bool
     {
-        return $this->evaluator->allows(
-            $this->actorProvider->getActor($request),
+        return $this->authorizationEvaluator->allows(
+            $this->requestActorProvider->getActor($serverRequest),
             $permission,
             $context,
         );
@@ -28,9 +31,9 @@ final readonly class RequestGuard implements RequestGuardInterface
     /**
      * @param array<string, mixed> $context
      */
-    public function denies(ServerRequestInterface $request, string $permission, array $context = []): bool
+    public function denies(ServerRequestInterface $serverRequest, string $permission, array $context = []): bool
     {
-        return ! $this->allows($request, $permission, $context);
+        return ! $this->allows($serverRequest, $permission, $context);
     }
 
     /**
@@ -38,9 +41,9 @@ final readonly class RequestGuard implements RequestGuardInterface
      *
      * @throws AuthorizationException
      */
-    public function authorize(ServerRequestInterface $request, string $permission, array $context = []): void
+    public function authorize(ServerRequestInterface $serverRequest, string $permission, array $context = []): void
     {
-        if ($this->denies($request, $permission, $context)) {
+        if ($this->denies($serverRequest, $permission, $context)) {
             throw new AuthorizationException($permission, 'Forbidden');
         }
     }

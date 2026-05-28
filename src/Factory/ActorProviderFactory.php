@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Sirix\Mezzio\Rbac\Factory;
 
-use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
-use Psr\Container\NotFoundExceptionInterface;
+use Sirix\ContainerResolver\ContainerResolver;
+use Sirix\ContainerResolver\Exception\ResolverException;
 use Sirix\Mezzio\Rbac\Actor\ContainerActorProvider;
 use Sirix\Mezzio\Rbac\Actor\GuestActor;
 use Sirix\Mezzio\Rbac\Contract\ActorProviderInterface;
@@ -14,14 +14,15 @@ use Sirix\Mezzio\Rbac\Contract\ActorProviderInterface;
 final class ActorProviderFactory
 {
     /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
+     * @throws ResolverException
      */
     public function __invoke(ContainerInterface $container): ActorProviderInterface
     {
+        $containerResolver = ContainerResolver::forFactory($container, self::class);
+
         return new ContainerActorProvider(
             $container,
-            $container->get(GuestActor::class),
+            $containerResolver->get(GuestActor::class),
         );
     }
 }

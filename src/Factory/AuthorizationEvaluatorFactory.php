@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Sirix\Mezzio\Rbac\Factory;
 
-use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
-use Psr\Container\NotFoundExceptionInterface;
+use Sirix\ContainerResolver\ContainerResolver;
+use Sirix\ContainerResolver\Exception\ResolverException;
 use Sirix\Mezzio\Rbac\AuthorizationEvaluator;
 use Sirix\Mezzio\Rbac\Contract\PermissionLookupInterface;
 use Sirix\Mezzio\Rbac\RuleResolver;
@@ -14,14 +14,15 @@ use Sirix\Mezzio\Rbac\RuleResolver;
 final class AuthorizationEvaluatorFactory
 {
     /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
+     * @throws ResolverException
      */
     public function __invoke(ContainerInterface $container): AuthorizationEvaluator
     {
+        $containerResolver = ContainerResolver::forFactory($container, self::class);
+
         return new AuthorizationEvaluator(
-            $container->get(PermissionLookupInterface::class),
-            $container->get(RuleResolver::class),
+            $containerResolver->get(PermissionLookupInterface::class),
+            $containerResolver->get(RuleResolver::class),
         );
     }
 }

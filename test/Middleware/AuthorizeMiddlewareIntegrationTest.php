@@ -33,8 +33,8 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
     #[Test]
     public function deniesNonAdminActorWhenPermissionExistsOnlyInMatchedRouteOptions(): void
     {
-        $middleware = $this->middlewareWithAdminAccessPermission();
-        $request = $this->requestWithRoutePermissionAndAuthenticationActor(['user']);
+        $authorizeMiddleware = $this->middlewareWithAdminAccessPermission();
+        $serverRequest = $this->requestWithRoutePermissionAndAuthenticationActor(['user']);
 
         $handler = $this->createMock(RequestHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
@@ -42,27 +42,27 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
         $this->expectException(AuthorizationException::class);
         $this->expectExceptionMessage('Forbidden');
 
-        $middleware->process($request, $handler);
+        $authorizeMiddleware->process($serverRequest, $handler);
     }
 
     #[Test]
     public function allowsAdminActorWhenPermissionExistsOnlyInMatchedRouteOptions(): void
     {
-        $middleware = $this->middlewareWithAdminAccessPermission();
-        $request = $this->requestWithRoutePermissionAndAuthenticationActor(['admin']);
+        $authorizeMiddleware = $this->middlewareWithAdminAccessPermission();
+        $serverRequest = $this->requestWithRoutePermissionAndAuthenticationActor(['admin']);
 
         $response = $this->createMock(ResponseInterface::class);
         $handler = $this->createMock(RequestHandlerInterface::class);
-        $handler->expects(self::once())->method('handle')->with($request)->willReturn($response);
+        $handler->expects(self::once())->method('handle')->with($serverRequest)->willReturn($response);
 
-        self::assertSame($response, $middleware->process($request, $handler));
+        self::assertSame($response, $authorizeMiddleware->process($serverRequest, $handler));
     }
 
     #[Test]
     public function mapsRouteOptionContextFromRequestAttributesIntoAuthorizationRule(): void
     {
-        $store = new InMemoryPermissionStore();
-        $permissions = new Permissions(new PermissionMatcher(), $store);
+        $inMemoryPermissionStore = new InMemoryPermissionStore();
+        $permissions = new Permissions(new PermissionMatcher(), $inMemoryPermissionStore);
         $permissions->addRole('admin');
         $permissions->associate('admin', 'posts.update', new class implements RuleInterface {
             public function allows(ActorInterface $actor, string $permission, array $context): bool
@@ -72,7 +72,7 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
         });
 
         $middleware = $this->middleware($permissions);
-        $request = $this->requestWithRoutePermissionAndAuthenticationActor(
+        $serverRequest = $this->requestWithRoutePermissionAndAuthenticationActor(
             ['admin'],
             'posts.update',
             ['postId' => 'id'],
@@ -81,15 +81,15 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
 
         $response = $this->createMock(ResponseInterface::class);
         $handler = $this->createMock(RequestHandlerInterface::class);
-        $handler->expects(self::once())->method('handle')->with($request)->willReturn($response);
+        $handler->expects(self::once())->method('handle')->with($serverRequest)->willReturn($response);
 
-        self::assertSame($response, $middleware->process($request, $handler));
+        self::assertSame($response, $middleware->process($serverRequest, $handler));
     }
 
     private function middlewareWithAdminAccessPermission(): AuthorizeMiddleware
     {
-        $store = new InMemoryPermissionStore();
-        $permissions = new Permissions(new PermissionMatcher(), $store);
+        $inMemoryPermissionStore = new InMemoryPermissionStore();
+        $permissions = new Permissions(new PermissionMatcher(), $inMemoryPermissionStore);
         $permissions->addRole('admin');
         $permissions->associate('admin', 'admin.access');
 

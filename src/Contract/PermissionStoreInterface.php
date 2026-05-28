@@ -12,7 +12,7 @@ interface PermissionStoreInterface
 
     public function nextPriority(): int;
 
-    public function addAssociation(PermissionAssociationInterface $association): void;
+    public function addAssociation(PermissionAssociationInterface $permissionAssociation): void;
 
     /**
      * @return list<PermissionAssociationInterface>
