@@ -6,7 +6,7 @@ namespace Sirix\Mezzio\Rbac;
 
 use InvalidArgumentException;
 use Sirix\Mezzio\Rbac\Contract\PermissionAssociationInterface;
-use Sirix\Mezzio\Rbac\Contract\PermissionMapInterface;
+use Sirix\Mezzio\Rbac\Contract\PermissionLookupInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionsInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionStoreInterface;
 use Sirix\Mezzio\Rbac\Contract\RuleInterface;
@@ -14,9 +14,9 @@ use Sirix\Mezzio\Rbac\Contract\RuleInterface;
 use function array_reverse;
 use function trim;
 
-final readonly class Permissions implements PermissionsInterface, PermissionMapInterface
+final readonly class Permissions implements PermissionsInterface, PermissionLookupInterface
 {
-    public function __construct(private PermissionMatcher $matcher, private PermissionStoreInterface $store) {}
+    public function __construct(private PermissionMatcher $permissionMatcher, private PermissionStoreInterface $permissionStore) {}
 
     public function addRole(string $role): void
     {
@@ -27,7 +27,7 @@ final readonly class Permissions implements PermissionsInterface, PermissionMapI
             );
         }
 
-        $this->store->addRole($role);
+        $this->permissionStore->addRole($role);
     }
 
     /**
@@ -50,19 +50,19 @@ final readonly class Permissions implements PermissionsInterface, PermissionMapI
             );
         }
 
-        if (! $this->store->hasRole($role)) {
+        if (! $this->permissionStore->hasRole($role)) {
             throw new InvalidArgumentException(
                 "Role '{$role}' must be registered before association.",
             );
         }
 
-        $this->store->addAssociation(
+        $this->permissionStore->addAssociation(
             new PermissionAssociation(
                 role: $role,
                 pattern: $permissionPattern,
                 rule: $rule,
-                priority: $this->store->nextPriority(),
-                specificity: $this->matcher->specificity($permissionPattern),
+                priority: $this->permissionStore->nextPriority(),
+                specificity: $this->permissionMatcher->specificity($permissionPattern),
             ),
         );
     }
@@ -72,11 +72,11 @@ final readonly class Permissions implements PermissionsInterface, PermissionMapI
         $best = null;
 
         foreach (
-            array_reverse($this->store->associationsForRole($role)) as $association
+            array_reverse($this->permissionStore->associationsForRole($role)) as $permissionAssociation
         ) {
             if (
-                ! $this->matcher->matches(
-                    $association->getPattern(),
+                ! $this->permissionMatcher->matches(
+                    $permissionAssociation->getPattern(),
                     $permission,
                 )
             ) {
@@ -85,9 +85,9 @@ final readonly class Permissions implements PermissionsInterface, PermissionMapI
 
             if (
                 null === $best
-                || $association->getSpecificity() > $best->getSpecificity()
+                || $permissionAssociation->getSpecificity() > $best->getSpecificity()
             ) {
-                $best = $association;
+                $best = $permissionAssociation;
             }
         }
 

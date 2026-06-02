@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Sirix\Mezzio\Rbac\Contract;
 
-interface PermissionMapInterface
+interface PermissionLookupInterface
 {
     public function bestAssociationForRole(string $role, string $permission): ?PermissionAssociationInterface;
 }

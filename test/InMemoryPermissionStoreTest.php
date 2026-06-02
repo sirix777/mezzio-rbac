@@ -12,55 +12,55 @@ use Sirix\Mezzio\Rbac\Rule\AllowRule;
 
 final class InMemoryPermissionStoreTest extends TestCase
 {
-    private InMemoryPermissionStore $store;
+    private InMemoryPermissionStore $inMemoryPermissionStore;
 
     protected function setUp(): void
     {
-        $this->store = new InMemoryPermissionStore();
+        $this->inMemoryPermissionStore = new InMemoryPermissionStore();
     }
 
     #[Test]
     public function addAndHasRole(): void
     {
-        $this->store->addRole('admin');
-        self::assertTrue($this->store->hasRole('admin'));
-        self::assertFalse($this->store->hasRole('editor'));
+        $this->inMemoryPermissionStore->addRole('admin');
+        self::assertTrue($this->inMemoryPermissionStore->hasRole('admin'));
+        self::assertFalse($this->inMemoryPermissionStore->hasRole('editor'));
     }
 
     #[Test]
     public function nextPriorityIncrements(): void
     {
-        self::assertSame(1, $this->store->nextPriority());
-        self::assertSame(2, $this->store->nextPriority());
-        self::assertSame(3, $this->store->nextPriority());
+        self::assertSame(1, $this->inMemoryPermissionStore->nextPriority());
+        self::assertSame(2, $this->inMemoryPermissionStore->nextPriority());
+        self::assertSame(3, $this->inMemoryPermissionStore->nextPriority());
     }
 
     #[Test]
     public function addAssociationForRole(): void
     {
-        $this->store->addRole('admin');
-        $association = new PermissionAssociation('admin', 'posts.*', AllowRule::class, 1, 1002);
-        $this->store->addAssociation($association);
+        $this->inMemoryPermissionStore->addRole('admin');
+        $permissionAssociation = new PermissionAssociation('admin', 'posts.*', AllowRule::class, 1, 1002);
+        $this->inMemoryPermissionStore->addAssociation($permissionAssociation);
 
-        $associations = $this->store->associationsForRole('admin');
+        $associations = $this->inMemoryPermissionStore->associationsForRole('admin');
         self::assertCount(1, $associations);
-        self::assertSame($association, $associations[0]);
+        self::assertSame($permissionAssociation, $associations[0]);
     }
 
     #[Test]
     public function associationsForUnknownRoleReturnsEmptyArray(): void
     {
-        self::assertSame([], $this->store->associationsForRole('unknown'));
+        self::assertSame([], $this->inMemoryPermissionStore->associationsForRole('unknown'));
     }
 
     #[Test]
     public function multipleAssociationsForRole(): void
     {
-        $this->store->addRole('admin');
-        $this->store->addAssociation(new PermissionAssociation('admin', 'posts.*', AllowRule::class, 1, 1002));
-        $this->store->addAssociation(new PermissionAssociation('admin', 'posts.read', AllowRule::class, 2, 2002));
+        $this->inMemoryPermissionStore->addRole('admin');
+        $this->inMemoryPermissionStore->addAssociation(new PermissionAssociation('admin', 'posts.*', AllowRule::class, 1, 1002));
+        $this->inMemoryPermissionStore->addAssociation(new PermissionAssociation('admin', 'posts.read', AllowRule::class, 2, 2002));
 
-        $associations = $this->store->associationsForRole('admin');
+        $associations = $this->inMemoryPermissionStore->associationsForRole('admin');
         self::assertCount(2, $associations);
     }
 }

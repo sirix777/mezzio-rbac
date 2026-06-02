@@ -6,7 +6,7 @@ namespace Sirix\Mezzio\Rbac\Factory;
 
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
-use Psr\Container\NotFoundExceptionInterface;
+use Sirix\ContainerResolver\ContainerResolver;
 use Sirix\Mezzio\Rbac\Contract\PermissionsInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionStoreInterface;
 use Sirix\Mezzio\Rbac\PermissionMatcher;
@@ -16,13 +16,14 @@ final class PermissionsFactory
 {
     /**
      * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
      */
     public function __invoke(ContainerInterface $container): PermissionsInterface
     {
+        $containerResolver = ContainerResolver::forFactory($container, self::class);
+
         return new Permissions(
-            $container->get(PermissionMatcher::class),
-            $container->get(PermissionStoreInterface::class),
+            $containerResolver->get(PermissionMatcher::class),
+            $containerResolver->get(PermissionStoreInterface::class),
         );
     }
 }

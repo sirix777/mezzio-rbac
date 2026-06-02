@@ -36,9 +36,9 @@ final class InMemoryPermissionStore implements PermissionStoreInterface
         return ++$this->sequence;
     }
 
-    public function addAssociation(PermissionAssociationInterface $association): void
+    public function addAssociation(PermissionAssociationInterface $permissionAssociation): void
     {
-        $this->associations[$association->getRole()][] = $association;
+        $this->associations[$permissionAssociation->getRole()][] = $permissionAssociation;
     }
 
     public function associationsForRole(string $role): array
