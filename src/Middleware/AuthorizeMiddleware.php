@@ -41,7 +41,7 @@ final readonly class AuthorizeMiddleware implements MiddlewareInterface
 
     private function resolvePermission(ServerRequestInterface $serverRequest): ?string
     {
-        $missing = new stdClass();
+        $missing    = new stdClass();
         $permission = $serverRequest->getAttribute(RbacAttribute::Permission->value, $missing);
 
         if ($permission !== $missing) {
@@ -100,7 +100,7 @@ final readonly class AuthorizeMiddleware implements MiddlewareInterface
                 continue;
             }
 
-            $contextKey = is_int($key) ? $attribute : $key;
+            $contextKey           = is_int($key) ? $attribute : $key;
             $context[$contextKey] = $serverRequest->getAttribute($attribute);
         }
 

@@ -35,7 +35,7 @@ final class ConfigProviderTest extends TestCase
     public function returnsDependenciesArray(): void
     {
         $configProvider = new ConfigProvider();
-        $config = $configProvider();
+        $config         = $configProvider();
 
         self::assertArrayHasKey('dependencies', $config);
         self::assertArrayHasKey('factories', $config['dependencies']);
@@ -46,7 +46,7 @@ final class ConfigProviderTest extends TestCase
     public function registersGuardFactory(): void
     {
         $configProvider = new ConfigProvider();
-        $dependencies = $configProvider->getDependencies();
+        $dependencies   = $configProvider->getDependencies();
 
         self::assertArrayHasKey(GuardInterface::class, $dependencies['factories']);
         self::assertArrayHasKey(RequestGuardInterface::class, $dependencies['factories']);
@@ -57,7 +57,7 @@ final class ConfigProviderTest extends TestCase
     public function registersPermissionsFactory(): void
     {
         $configProvider = new ConfigProvider();
-        $dependencies = $configProvider->getDependencies();
+        $dependencies   = $configProvider->getDependencies();
 
         self::assertArrayHasKey(PermissionsInterface::class, $dependencies['factories']);
         self::assertSame(PermissionsInterface::class, $dependencies['aliases'][PermissionLookupInterface::class]);
@@ -67,7 +67,7 @@ final class ConfigProviderTest extends TestCase
     public function registersPermissionStoreAsInvokableAlias(): void
     {
         $configProvider = new ConfigProvider();
-        $dependencies = $configProvider->getDependencies();
+        $dependencies   = $configProvider->getDependencies();
 
         self::assertSame(InMemoryPermissionStore::class, $dependencies['aliases'][PermissionStoreInterface::class]);
         self::assertArrayHasKey(InMemoryPermissionStore::class, $dependencies['invokables']);
@@ -77,7 +77,7 @@ final class ConfigProviderTest extends TestCase
     public function registersInvokables(): void
     {
         $configProvider = new ConfigProvider();
-        $dependencies = $configProvider->getDependencies();
+        $dependencies   = $configProvider->getDependencies();
 
         self::assertArrayHasKey(PermissionMatcher::class, $dependencies['invokables']);
         self::assertArrayHasKey(GuestActor::class, $dependencies['invokables']);
@@ -90,7 +90,7 @@ final class ConfigProviderTest extends TestCase
     public function registersActorProvider(): void
     {
         $configProvider = new ConfigProvider();
-        $dependencies = $configProvider->getDependencies();
+        $dependencies   = $configProvider->getDependencies();
 
         self::assertArrayHasKey(ActorProviderInterface::class, $dependencies['factories']);
         self::assertArrayHasKey(RequestActorProviderInterface::class, $dependencies['factories']);
@@ -100,7 +100,7 @@ final class ConfigProviderTest extends TestCase
     public function registersRules(): void
     {
         $configProvider = new ConfigProvider();
-        $dependencies = $configProvider->getDependencies();
+        $dependencies   = $configProvider->getDependencies();
 
         self::assertArrayHasKey(AllowRule::class, $dependencies['invokables']);
         self::assertArrayHasKey(ForbidRule::class, $dependencies['invokables']);
@@ -110,7 +110,7 @@ final class ConfigProviderTest extends TestCase
     public function registersMiddleware(): void
     {
         $configProvider = new ConfigProvider();
-        $dependencies = $configProvider->getDependencies();
+        $dependencies   = $configProvider->getDependencies();
 
         self::assertArrayHasKey(AuthorizeMiddleware::class, $dependencies['factories']);
     }
@@ -146,7 +146,7 @@ final class ConfigProviderTest extends TestCase
         $request->method('getAttribute')
             ->willReturnCallback(static fn (string $name, $default = null): mixed => match ($name) {
                 'sirix.authentication.actor' => new Actor(['admin']),
-                default => $default,
+                default                      => $default,
             })
         ;
 

@@ -22,7 +22,7 @@ final class RequestActorProviderFactory
     public function __invoke(ContainerInterface $container): RequestActorProviderInterface
     {
         $containerResolver = ContainerResolver::forFactory($container, self::class);
-        $configReader = ConfigReader::fromContainer($containerResolver);
+        $configReader      = ConfigReader::fromContainer($containerResolver);
 
         return new RequestAttributeActorProvider(
             $configReader->nonEmptyString('rbac.request_actor_attribute', self::DEFAULT_ACTOR_ATTRIBUTE),

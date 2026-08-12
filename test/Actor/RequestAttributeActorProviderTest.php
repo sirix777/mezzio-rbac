@@ -17,7 +17,7 @@ final class RequestAttributeActorProviderTest extends TestCase
     #[Test]
     public function returnsRbacActorFromConfiguredRequestAttribute(): void
     {
-        $actor = new Actor(['admin']);
+        $actor   = new Actor(['admin']);
         $request = $this->createMock(ServerRequestInterface::class);
         $request->method('getAttribute')->with('actor')->willReturn($actor);
 
@@ -30,7 +30,7 @@ final class RequestAttributeActorProviderTest extends TestCase
     public function returnsGuestActorWhenAttributeIsMissing(): void
     {
         $guestActor = new GuestActor();
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request    = $this->createMock(ServerRequestInterface::class);
         $request->method('getAttribute')->with('actor')->willReturn(null);
 
         $requestAttributeActorProvider = new RequestAttributeActorProvider('actor', $guestActor);
@@ -42,7 +42,7 @@ final class RequestAttributeActorProviderTest extends TestCase
     public function returnsGuestActorWhenAttributeIsNotActorLike(): void
     {
         $guestActor = new GuestActor();
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request    = $this->createMock(ServerRequestInterface::class);
         $request->method('getAttribute')->with('actor')->willReturn('not-an-actor');
 
         $requestAttributeActorProvider = new RequestAttributeActorProvider('actor', $guestActor);
@@ -67,7 +67,7 @@ final class RequestAttributeActorProviderTest extends TestCase
         $request->method('getAttribute')->with('actor')->willReturn($genericActor);
 
         $requestAttributeActorProvider = new RequestAttributeActorProvider('actor', new GuestActor());
-        $actor = $requestAttributeActorProvider->getActor($request);
+        $actor                         = $requestAttributeActorProvider->getActor($request);
 
         self::assertInstanceOf(GenericActorAdapter::class, $actor);
         self::assertSame(['admin'], $actor->getRoles());

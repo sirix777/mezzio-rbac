@@ -52,7 +52,12 @@ final class GenericActorAdapterTest extends TestCase
              */
             public function getRoles(): array
             {
-                return [10 => 'admin', 11 => 123, 12 => 'editor', 13 => null];
+                return [
+                    10 => 'admin',
+                    11 => 123,
+                    12 => 'editor',
+                    13 => null,
+                ];
             }
         });
 

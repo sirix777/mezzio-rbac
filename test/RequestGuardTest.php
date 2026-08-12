@@ -30,20 +30,20 @@ final class RequestGuardTest extends TestCase
 
     protected function setUp(): void
     {
-        $permissionMatcher = new PermissionMatcher();
+        $permissionMatcher       = new PermissionMatcher();
         $inMemoryPermissionStore = new InMemoryPermissionStore();
-        $this->permissions = new Permissions($permissionMatcher, $inMemoryPermissionStore);
-        $this->serverRequest = $this->createMock(ServerRequestInterface::class);
+        $this->permissions       = new Permissions($permissionMatcher, $inMemoryPermissionStore);
+        $this->serverRequest     = $this->createMock(ServerRequestInterface::class);
 
         $container = $this->createMock(ContainerInterface::class);
         $container->method('has')->willReturn(false);
         $container->method('get')->willReturnCallback(static fn (string $id) => match ($id) {
-            AllowRule::class => new AllowRule(),
+            AllowRule::class  => new AllowRule(),
             ForbidRule::class => new ForbidRule(),
-            default => null,
+            default           => null,
         });
 
-        $ruleResolver = new RuleResolver($container, new AllowRule());
+        $ruleResolver  = new RuleResolver($container, new AllowRule());
         $actorProvider = $this->createMock(RequestActorProviderInterface::class);
         $actorProvider->method('getActor')->with($this->serverRequest)->willReturn(new Actor(['admin']));
 
@@ -104,7 +104,11 @@ final class RequestGuardTest extends TestCase
             }
         });
 
-        self::assertTrue($this->requestGuard->allows($this->serverRequest, 'posts.update', ['postId' => '123']));
-        self::assertFalse($this->requestGuard->allows($this->serverRequest, 'posts.update', ['postId' => '456']));
+        self::assertTrue($this->requestGuard->allows($this->serverRequest, 'posts.update', [
+            'postId' => '123',
+        ]));
+        self::assertFalse($this->requestGuard->allows($this->serverRequest, 'posts.update', [
+            'postId' => '456',
+        ]));
     }
 }

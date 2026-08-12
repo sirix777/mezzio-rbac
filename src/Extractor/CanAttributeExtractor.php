@@ -29,11 +29,11 @@ final class CanAttributeExtractor
         }
 
         $reflectionMethod = new ReflectionMethod($className, $methodName);
-        $attributes = $this->extractCanAttributes($reflectionMethod);
+        $attributes       = $this->extractCanAttributes($reflectionMethod);
 
         if ([] === $attributes) {
             $reflectionClass = new ReflectionClass($className);
-            $attributes = $this->extractCanAttributes($reflectionClass);
+            $attributes      = $this->extractCanAttributes($reflectionClass);
         }
 
         return $this->cache[$cacheKey] = $attributes;

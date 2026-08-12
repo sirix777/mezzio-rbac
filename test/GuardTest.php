@@ -26,19 +26,19 @@ final class GuardTest extends TestCase
 
     protected function setUp(): void
     {
-        $permissionMatcher = new PermissionMatcher();
+        $permissionMatcher       = new PermissionMatcher();
         $inMemoryPermissionStore = new InMemoryPermissionStore();
-        $this->permissions = new Permissions($permissionMatcher, $inMemoryPermissionStore);
+        $this->permissions       = new Permissions($permissionMatcher, $inMemoryPermissionStore);
 
         $container = $this->createMock(ContainerInterface::class);
         $container->method('has')->willReturn(false);
         $container->method('get')->willReturnCallback(static fn (string $id) => match ($id) {
-            AllowRule::class => new AllowRule(),
+            AllowRule::class  => new AllowRule(),
             ForbidRule::class => new ForbidRule(),
-            default => null,
+            default           => null,
         });
 
-        $ruleResolver = new RuleResolver($container, new AllowRule());
+        $ruleResolver  = new RuleResolver($container, new AllowRule());
         $actorProvider = $this->createMock(ActorProviderInterface::class);
         $actorProvider->method('getActor')->willReturn(new Actor(['admin']));
 

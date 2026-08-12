@@ -20,9 +20,9 @@ final class PermissionsTest extends TestCase
 
     protected function setUp(): void
     {
-        $permissionMatcher = new PermissionMatcher();
+        $permissionMatcher       = new PermissionMatcher();
         $inMemoryPermissionStore = new InMemoryPermissionStore();
-        $this->permissions = new Permissions($permissionMatcher, $inMemoryPermissionStore);
+        $this->permissions       = new Permissions($permissionMatcher, $inMemoryPermissionStore);
     }
 
     #[Test]

@@ -17,7 +17,7 @@ final class RuleResolverTest extends TestCase
     #[Test]
     public function resolvesRuleInstance(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
+        $container    = $this->createMock(ContainerInterface::class);
         $ruleResolver = new RuleResolver($container, new AllowRule());
 
         $forbidRule = new ForbidRule();
@@ -27,8 +27,8 @@ final class RuleResolverTest extends TestCase
     #[Test]
     public function resolvesNullToDefaultRule(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
-        $allowRule = new AllowRule();
+        $container    = $this->createMock(ContainerInterface::class);
+        $allowRule    = new AllowRule();
         $ruleResolver = new RuleResolver($container, $allowRule);
 
         self::assertSame($allowRule, $ruleResolver->resolve(null));
@@ -53,7 +53,7 @@ final class RuleResolverTest extends TestCase
         $container->method('has')->willReturn(false);
 
         $ruleResolver = new RuleResolver($container, new ForbidRule());
-        $rule = $ruleResolver->resolve(AllowRule::class);
+        $rule         = $ruleResolver->resolve(AllowRule::class);
 
         self::assertInstanceOf(AllowRule::class, $rule);
     }

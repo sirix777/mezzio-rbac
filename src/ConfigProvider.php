@@ -43,27 +43,27 @@ final readonly class ConfigProvider
     public function getDependencies(): array
     {
         return [
-            'factories' => [
-                GuardInterface::class => GuardFactory::class,
-                RequestGuardInterface::class => RequestGuardFactory::class,
-                PermissionsInterface::class => PermissionsFactory::class,
-                AuthorizationEvaluator::class => AuthorizationEvaluatorFactory::class,
-                RuleResolver::class => RuleResolverFactory::class,
-                ActorProviderInterface::class => ActorProviderFactory::class,
+            'factories'  => [
+                GuardInterface::class                => GuardFactory::class,
+                RequestGuardInterface::class         => RequestGuardFactory::class,
+                PermissionsInterface::class          => PermissionsFactory::class,
+                AuthorizationEvaluator::class        => AuthorizationEvaluatorFactory::class,
+                RuleResolver::class                  => RuleResolverFactory::class,
+                ActorProviderInterface::class        => ActorProviderFactory::class,
                 RequestActorProviderInterface::class => RequestActorProviderFactory::class,
-                AuthorizeMiddleware::class => AuthorizeMiddlewareFactory::class,
+                AuthorizeMiddleware::class           => AuthorizeMiddlewareFactory::class,
             ],
             'invokables' => [
-                PermissionMatcher::class => PermissionMatcher::class,
-                GuestActor::class => GuestActor::class,
-                AllowRule::class => AllowRule::class,
-                ForbidRule::class => ForbidRule::class,
+                PermissionMatcher::class       => PermissionMatcher::class,
+                GuestActor::class              => GuestActor::class,
+                AllowRule::class               => AllowRule::class,
+                ForbidRule::class              => ForbidRule::class,
                 InMemoryPermissionStore::class => InMemoryPermissionStore::class,
-                CanAttributeExtractor::class => CanAttributeExtractor::class,
+                CanAttributeExtractor::class   => CanAttributeExtractor::class,
             ],
-            'aliases' => [
+            'aliases'    => [
                 PermissionLookupInterface::class => PermissionsInterface::class,
-                PermissionStoreInterface::class => InMemoryPermissionStore::class,
+                PermissionStoreInterface::class  => InMemoryPermissionStore::class,
             ],
         ];
     }

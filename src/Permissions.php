@@ -35,7 +35,7 @@ final readonly class Permissions implements PermissionsInterface, PermissionLook
      */
     public function associate(string $role, string $permissionPattern, RuleInterface|string|null $rule = null): void
     {
-        $role = trim($role);
+        $role              = trim($role);
         $permissionPattern = trim($permissionPattern);
 
         if ('' === $role) {
