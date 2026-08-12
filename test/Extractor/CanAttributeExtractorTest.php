@@ -47,7 +47,9 @@ final class CanAttributeExtractorTest extends TestCase
 
         self::assertCount(1, $attributes);
         self::assertSame('posts.update', $attributes[0]->permission);
-        self::assertSame(['post' => 'id'], $attributes[0]->context);
+        self::assertSame([
+            'post' => 'id',
+        ], $attributes[0]->context);
     }
 
     #[Test]
@@ -79,7 +81,7 @@ final class CanAttributeExtractorTest extends TestCase
     #[Test]
     public function cachingWorks(): void
     {
-        $first = $this->canAttributeExtractor->extractForClass(ClassLevelCanHandler::class);
+        $first  = $this->canAttributeExtractor->extractForClass(ClassLevelCanHandler::class);
         $second = $this->canAttributeExtractor->extractForClass(ClassLevelCanHandler::class);
 
         self::assertSame($first, $second);

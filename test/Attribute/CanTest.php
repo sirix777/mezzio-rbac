@@ -30,13 +30,17 @@ final class CanTest extends TestCase
     #[Test]
     public function returnsDefaults(): void
     {
-        $can = new Can('posts.update', ['post' => 'id']);
+        $can = new Can('posts.update', [
+            'post' => 'id',
+        ]);
         $defaults = $can->getDefaults();
 
         self::assertArrayHasKey(RbacAttribute::Permission->value, $defaults);
         self::assertSame('posts.update', $defaults[RbacAttribute::Permission->value]);
 
         self::assertArrayHasKey(RbacAttribute::Context->value, $defaults);
-        self::assertSame(['post' => 'id'], $defaults[RbacAttribute::Context->value]);
+        self::assertSame([
+            'post' => 'id',
+        ], $defaults[RbacAttribute::Context->value]);
     }
 }

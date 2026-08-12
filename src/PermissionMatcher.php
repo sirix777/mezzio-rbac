@@ -16,10 +16,10 @@ final readonly class PermissionMatcher
 {
     public function matches(string $pattern, string $permission): bool
     {
-        $patternSegments = $this->segments($pattern);
+        $patternSegments    = $this->segments($pattern);
         $permissionSegments = $this->segments($permission);
 
-        $patternCount = count($patternSegments);
+        $patternCount    = count($patternSegments);
         $permissionCount = count($permissionSegments);
 
         if ('*' === $patternSegments[$patternCount - 1]) {
@@ -49,7 +49,7 @@ final readonly class PermissionMatcher
 
     public function specificity(string $pattern): int
     {
-        $segments = $this->segments($pattern);
+        $segments      = $this->segments($pattern);
         $exactSegments = array_sum(array_map(
             static fn (string $segment): int => '*' === $segment ? 0 : 1,
             $segments,

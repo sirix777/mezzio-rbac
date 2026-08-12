@@ -27,8 +27,8 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::never())->method('authorize');
 
-        $response = $this->createMock(ResponseInterface::class);
-        $request = $this->request();
+        $response            = $this->createMock(ResponseInterface::class);
+        $request             = $this->request();
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -39,13 +39,13 @@ final class AuthorizeMiddlewareTest extends TestCase
     {
         $request = $this->request([
             RbacAttribute::Permission->value => 'posts.read',
-            RbacAttribute::Context->value => [],
+            RbacAttribute::Context->value    => [],
         ]);
 
         $guard = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::once())->method('authorize')->with($request, 'posts.read', []);
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response            = $this->createMock(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -56,13 +56,13 @@ final class AuthorizeMiddlewareTest extends TestCase
     {
         $request = $this->request([], $this->routeResult([
             RbacAttribute::Permission->value => 'admin.access',
-            RbacAttribute::Context->value => [],
+            RbacAttribute::Context->value    => [],
         ]));
 
         $guard = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::once())->method('authorize')->with($request, 'admin.access', []);
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response            = $this->createMock(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -73,7 +73,7 @@ final class AuthorizeMiddlewareTest extends TestCase
     {
         $request = $this->request([
             RbacAttribute::Permission->value => 'posts.read',
-            RbacAttribute::Context->value => [],
+            RbacAttribute::Context->value    => [],
         ], $this->routeResult([
             RbacAttribute::Permission->value => 'admin.access',
         ]));
@@ -81,7 +81,7 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::once())->method('authorize')->with($request, 'posts.read', []);
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response            = $this->createMock(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -95,7 +95,7 @@ final class AuthorizeMiddlewareTest extends TestCase
 
         $request = $this->request([
             RbacAttribute::Permission->value => 'posts.delete',
-            RbacAttribute::Context->value => [],
+            RbacAttribute::Context->value    => [],
         ]);
 
         $this->expectException(AuthorizationException::class);
@@ -108,14 +108,18 @@ final class AuthorizeMiddlewareTest extends TestCase
     {
         $request = $this->request([
             RbacAttribute::Permission->value => 'posts.update',
-            RbacAttribute::Context->value => ['postId' => 'id'],
-            'id' => '123',
+            RbacAttribute::Context->value    => [
+                'postId' => 'id',
+            ],
+            'id'                             => '123',
         ]);
 
         $guard = $this->createMock(RequestGuardInterface::class);
-        $guard->expects(self::once())->method('authorize')->with($request, 'posts.update', ['postId' => '123']);
+        $guard->expects(self::once())->method('authorize')->with($request, 'posts.update', [
+            'postId' => '123',
+        ]);
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response            = $this->createMock(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -124,15 +128,21 @@ final class AuthorizeMiddlewareTest extends TestCase
     #[Test]
     public function resolvesContextFromRouteOptions(): void
     {
-        $request = $this->request(['id' => '123'], $this->routeResult([
+        $request = $this->request([
+            'id' => '123',
+        ], $this->routeResult([
             RbacAttribute::Permission->value => 'posts.update',
-            RbacAttribute::Context->value => ['postId' => 'id'],
+            RbacAttribute::Context->value    => [
+                'postId' => 'id',
+            ],
         ]));
 
         $guard = $this->createMock(RequestGuardInterface::class);
-        $guard->expects(self::once())->method('authorize')->with($request, 'posts.update', ['postId' => '123']);
+        $guard->expects(self::once())->method('authorize')->with($request, 'posts.update', [
+            'postId' => '123',
+        ]);
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response            = $this->createMock(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -142,18 +152,24 @@ final class AuthorizeMiddlewareTest extends TestCase
     public function requestAttributeContextWinsOverRouteOptionContext(): void
     {
         $request = $this->request([
-            RbacAttribute::Context->value => ['postId' => 'request_id'],
-            'request_id' => 'request-id',
-            'route_id' => 'route-id',
+            RbacAttribute::Context->value => [
+                'postId' => 'request_id',
+            ],
+            'request_id'                  => 'request-id',
+            'route_id'                    => 'route-id',
         ], $this->routeResult([
             RbacAttribute::Permission->value => 'posts.update',
-            RbacAttribute::Context->value => ['postId' => 'route_id'],
+            RbacAttribute::Context->value    => [
+                'postId' => 'route_id',
+            ],
         ]));
 
         $guard = $this->createMock(RequestGuardInterface::class);
-        $guard->expects(self::once())->method('authorize')->with($request, 'posts.update', ['postId' => 'request-id']);
+        $guard->expects(self::once())->method('authorize')->with($request, 'posts.update', [
+            'postId' => 'request-id',
+        ]);
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response            = $this->createMock(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -169,7 +185,7 @@ final class AuthorizeMiddlewareTest extends TestCase
             RbacAttribute::Permission->value => '',
         ]);
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response            = $this->createMock(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));

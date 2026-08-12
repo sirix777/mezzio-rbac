@@ -28,7 +28,9 @@ final class AuthorizationExceptionTest extends TestCase
         $authorizationException = new AuthorizationException(
             'posts.delete',
             'Access denied',
-            ['X-Custom' => 'value'],
+            [
+                'X-Custom' => 'value',
+            ],
             'You cannot delete this post',
         );
 
@@ -36,7 +38,9 @@ final class AuthorizationExceptionTest extends TestCase
         self::assertSame(403, $authorizationException->getStatusCode());
         self::assertSame('Access denied', $authorizationException->getMessage());
         self::assertSame('You cannot delete this post', $authorizationException->getPublicMessage());
-        self::assertSame(['X-Custom' => 'value'], $authorizationException->getHeaders());
+        self::assertSame([
+            'X-Custom' => 'value',
+        ], $authorizationException->getHeaders());
     }
 
     #[Test]

@@ -26,7 +26,7 @@ final readonly class Can implements RouteAttributeModifierInterface
     {
         return [
             RbacAttribute::Permission->value => $this->permission,
-            RbacAttribute::Context->value => $this->context,
+            RbacAttribute::Context->value    => $this->context,
         ];
     }
 }

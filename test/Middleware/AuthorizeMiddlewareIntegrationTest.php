@@ -34,7 +34,7 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
     public function deniesNonAdminActorWhenPermissionExistsOnlyInMatchedRouteOptions(): void
     {
         $authorizeMiddleware = $this->middlewareWithAdminAccessPermission();
-        $serverRequest = $this->requestWithRoutePermissionAndAuthenticationActor(['user']);
+        $serverRequest       = $this->requestWithRoutePermissionAndAuthenticationActor(['user']);
 
         $handler = $this->createMock(RequestHandlerInterface::class);
         $handler->expects(self::never())->method('handle');
@@ -49,10 +49,10 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
     public function allowsAdminActorWhenPermissionExistsOnlyInMatchedRouteOptions(): void
     {
         $authorizeMiddleware = $this->middlewareWithAdminAccessPermission();
-        $serverRequest = $this->requestWithRoutePermissionAndAuthenticationActor(['admin']);
+        $serverRequest       = $this->requestWithRoutePermissionAndAuthenticationActor(['admin']);
 
         $response = $this->createMock(ResponseInterface::class);
-        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler  = $this->createMock(RequestHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with($serverRequest)->willReturn($response);
 
         self::assertSame($response, $authorizeMiddleware->process($serverRequest, $handler));
@@ -62,7 +62,7 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
     public function mapsRouteOptionContextFromRequestAttributesIntoAuthorizationRule(): void
     {
         $inMemoryPermissionStore = new InMemoryPermissionStore();
-        $permissions = new Permissions(new PermissionMatcher(), $inMemoryPermissionStore);
+        $permissions             = new Permissions(new PermissionMatcher(), $inMemoryPermissionStore);
         $permissions->addRole('admin');
         $permissions->associate('admin', 'posts.update', new class implements RuleInterface {
             public function allows(ActorInterface $actor, string $permission, array $context): bool
@@ -71,16 +71,20 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
             }
         });
 
-        $middleware = $this->middleware($permissions);
+        $middleware    = $this->middleware($permissions);
         $serverRequest = $this->requestWithRoutePermissionAndAuthenticationActor(
             ['admin'],
             'posts.update',
-            ['postId' => 'id'],
-            ['id' => '123'],
+            [
+                'postId' => 'id',
+            ],
+            [
+                'id' => '123',
+            ],
         );
 
         $response = $this->createMock(ResponseInterface::class);
-        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler  = $this->createMock(RequestHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with($serverRequest)->willReturn($response);
 
         self::assertSame($response, $middleware->process($serverRequest, $handler));
@@ -89,7 +93,7 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
     private function middlewareWithAdminAccessPermission(): AuthorizeMiddleware
     {
         $inMemoryPermissionStore = new InMemoryPermissionStore();
-        $permissions = new Permissions(new PermissionMatcher(), $inMemoryPermissionStore);
+        $permissions             = new Permissions(new PermissionMatcher(), $inMemoryPermissionStore);
         $permissions->addRole('admin');
         $permissions->associate('admin', 'admin.access');
 
@@ -123,7 +127,7 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
     ): ServerRequestInterface {
         $routeResult = $this->routeResult([
             RbacAttribute::Permission->value => $permission,
-            RbacAttribute::Context->value => $context,
+            RbacAttribute::Context->value    => $context,
         ], '/admin', 'admin');
 
         $actor = new class($roles) {
@@ -146,9 +150,9 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
             ->willReturnCallback(static fn (string $name, $default = null): mixed => match ($name) {
                 RbacAttribute::Permission->value,
                 RbacAttribute::Context->value => $default,
-                RouteResult::class => $routeResult,
-                'sirix.authentication.actor' => $actor,
-                default => $requestAttributes[$name] ?? $default,
+                RouteResult::class            => $routeResult,
+                'sirix.authentication.actor'  => $actor,
+                default                       => $requestAttributes[$name] ?? $default,
             })
         ;
 

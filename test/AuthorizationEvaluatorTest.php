@@ -90,12 +90,16 @@ final class AuthorizationEvaluatorTest extends TestCase
         self::assertTrue($this->authorizationEvaluator->allows(
             new Actor(['admin']),
             'posts.update',
-            ['postId' => '123'],
+            [
+                'postId' => '123',
+            ],
         ));
         self::assertFalse($this->authorizationEvaluator->allows(
             new Actor(['admin']),
             'posts.update',
-            ['postId' => '456'],
+            [
+                'postId' => '456',
+            ],
         ));
     }
 }
