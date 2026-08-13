@@ -6,18 +6,18 @@ namespace Sirix\Mezzio\Rbac;
 
 use InvalidArgumentException;
 
-use function array_map;
-use function array_sum;
 use function count;
 use function explode;
+use function preg_match;
+use function str_contains;
 use function trim;
 
 final readonly class PermissionMatcher
 {
     public function matches(string $pattern, string $permission): bool
     {
-        $patternSegments    = $this->segments($pattern);
-        $permissionSegments = $this->segments($permission);
+        $patternSegments    = $this->patternSegments($pattern);
+        $permissionSegments = $this->permissionSegments($permission);
 
         $patternCount    = count($patternSegments);
         $permissionCount = count($permissionSegments);
@@ -47,29 +47,78 @@ final readonly class PermissionMatcher
         return true;
     }
 
-    public function specificity(string $pattern): int
+    /**
+     * @return array{exactSegments: int, segmentCount: int}
+     */
+    public function specificity(string $pattern): array
     {
-        $segments      = $this->segments($pattern);
-        $exactSegments = array_sum(array_map(
-            static fn (string $segment): int => '*' === $segment ? 0 : 1,
-            $segments,
-        ));
+        $segments      = $this->patternSegments($pattern);
+        $exactSegments = 0;
 
-        return ($exactSegments * 1000) + count($segments);
+        foreach ($segments as $segment) {
+            if ('*' !== $segment) {
+                ++$exactSegments;
+            }
+        }
+
+        return [
+            'exactSegments' => $exactSegments,
+            'segmentCount'  => count($segments),
+        ];
     }
 
     /**
      * @return list<string>
      */
-    private function segments(string $permission): array
+    private function patternSegments(string $pattern): array
     {
-        $permission = trim($permission);
-        if ('' === $permission) {
+        return $this->segments($pattern, true, 'Permission pattern');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function permissionSegments(string $permission): array
+    {
+        return $this->segments($permission, false, 'Permission');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function segments(string $value, bool $wildcardsAllowed, string $label): array
+    {
+        $value = trim($value);
+        if ('' === $value) {
             throw new InvalidArgumentException(
-                'Permission pattern must be a non-empty string.',
+                "{$label} must be a non-empty string.",
             );
         }
 
-        return explode('.', $permission);
+        $segments = explode('.', $value);
+
+        foreach ($segments as $segment) {
+            if ('' === $segment || 1 === preg_match('/\s/u', $segment)) {
+                throw new InvalidArgumentException(
+                    "{$label} must contain non-empty, whitespace-free segments.",
+                );
+            }
+
+            if ('*' === $segment) {
+                if (! $wildcardsAllowed) {
+                    throw new InvalidArgumentException('Permission must not contain wildcard segments.');
+                }
+
+                continue;
+            }
+
+            if (str_contains($segment, '*')) {
+                throw new InvalidArgumentException(
+                    "{$label} wildcard must occupy an entire segment.",
+                );
+            }
+        }
+
+        return $segments;
     }
 }

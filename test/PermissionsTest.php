@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace SirixTest\Mezzio\Rbac;
 
 use InvalidArgumentException;
+use LogicException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Sirix\Mezzio\Rbac\Contract\PermissionAssociationInterface;
 use Sirix\Mezzio\Rbac\InMemoryPermissionStore;
+use Sirix\Mezzio\Rbac\PermissionAssociation;
 use Sirix\Mezzio\Rbac\PermissionMatcher;
 use Sirix\Mezzio\Rbac\Permissions;
 use Sirix\Mezzio\Rbac\Rule\AllowRule;
 use Sirix\Mezzio\Rbac\Rule\ForbidRule;
+use SirixTest\Mezzio\Rbac\TestAsset\PermissionStoreStub;
 
 final class PermissionsTest extends TestCase
 {
@@ -47,6 +50,14 @@ final class PermissionsTest extends TestCase
         $this->permissions->addRole('admin');
         $this->expectException(InvalidArgumentException::class);
         $this->permissions->associate('admin', '');
+    }
+
+    #[Test]
+    public function throwsOnMalformedPermissionPattern(): void
+    {
+        $this->permissions->addRole('admin');
+        $this->expectException(InvalidArgumentException::class);
+        $this->permissions->associate('admin', 'posts..read');
     }
 
     #[Test]
@@ -112,5 +123,89 @@ final class PermissionsTest extends TestCase
         $this->permissions->associate('  admin  ', '  posts.*  ');
 
         self::assertNotNull($this->permissions->bestAssociationForRole('admin', 'posts.read'));
+    }
+
+    #[Test]
+    public function bestAssociationUsesPriorityInsteadOfCustomStoreOrdering(): void
+    {
+        $permissionStoreStub = new PermissionStoreStub(reverseAssociations: true);
+        $permissions         = new Permissions(new PermissionMatcher(), $permissionStoreStub);
+        $permissions->addRole('editor');
+        $permissions->associate('editor', 'posts.*', AllowRule::class);
+        $permissions->associate('editor', 'posts.*', ForbidRule::class);
+
+        $association = $permissions->bestAssociationForRole('editor', 'posts.read');
+
+        self::assertNotNull($association);
+        self::assertSame(ForbidRule::class, $association->getRule());
+    }
+
+    #[Test]
+    public function bestAssociationPrefersSpecificityBeforePriority(): void
+    {
+        $permissionStoreStub = new PermissionStoreStub([
+            new PermissionAssociation('editor', 'posts.*', ForbidRule::class, 99),
+            new PermissionAssociation('editor', 'posts.read', AllowRule::class, 1),
+        ]);
+        $permissions = new Permissions(new PermissionMatcher(), $permissionStoreStub);
+
+        $association = $permissions->bestAssociationForRole('editor', 'posts.read');
+
+        self::assertNotNull($association);
+        self::assertSame('posts.read', $association->getPattern());
+    }
+
+    #[Test]
+    public function throwsWhenCustomStoreReturnsAmbiguousMatchingAssociations(): void
+    {
+        $permissionStoreStub = new PermissionStoreStub([
+            new PermissionAssociation('editor', 'posts.*', AllowRule::class, 1),
+            new PermissionAssociation('editor', 'posts.*', ForbidRule::class, 1),
+        ]);
+        $permissions = new Permissions(new PermissionMatcher(), $permissionStoreStub);
+
+        $this->expectException(LogicException::class);
+        $permissions->bestAssociationForRole('editor', 'posts.read');
+    }
+
+    #[Test]
+    public function rejectsAssociationReturnedForAnotherRole(): void
+    {
+        $permissionStoreStub = new PermissionStoreStub([
+            new PermissionAssociation('admin', 'admin.access', AllowRule::class, 1),
+        ]);
+        $permissions = new Permissions(new PermissionMatcher(), $permissionStoreStub);
+
+        $this->expectException(LogicException::class);
+        $permissions->bestAssociationForRole('guest', 'admin.access');
+    }
+
+    #[Test]
+    public function selectsTheMostSpecificPatternIndependentlyOfPriority(): void
+    {
+        $permissionStoreStub = new PermissionStoreStub([
+            new PermissionAssociation('editor', 'posts.*', AllowRule::class, 1),
+            new PermissionAssociation('editor', 'posts.delete', ForbidRule::class, 2),
+        ]);
+        $permissions = new Permissions(new PermissionMatcher(), $permissionStoreStub);
+
+        $association = $permissions->bestAssociationForRole('editor', 'posts.delete');
+
+        self::assertNotNull($association);
+        self::assertSame('posts.delete', $association->getPattern());
+    }
+
+    #[Test]
+    public function rejectsDuplicatePrioritiesEvenWhenAWinningAssociationAppearsFirst(): void
+    {
+        $permissionStoreStub = new PermissionStoreStub([
+            new PermissionAssociation('editor', 'posts.delete', ForbidRule::class, 2),
+            new PermissionAssociation('editor', 'posts.*', AllowRule::class, 1),
+            new PermissionAssociation('editor', 'posts.*', ForbidRule::class, 1),
+        ]);
+        $permissions = new Permissions(new PermissionMatcher(), $permissionStoreStub);
+
+        $this->expectException(LogicException::class);
+        $permissions->bestAssociationForRole('editor', 'posts.delete');
     }
 }

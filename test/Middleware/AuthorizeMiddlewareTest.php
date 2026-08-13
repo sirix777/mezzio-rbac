@@ -22,14 +22,14 @@ final class AuthorizeMiddlewareTest extends TestCase
     use RouteResultFactoryTrait;
 
     #[Test]
-    public function passesThroughWhenNoPermissionAttributeOrRouteOption(): void
+    public function permissiveModePassesThroughWhenNoPermissionAttributeOrRouteOption(): void
     {
-        $guard = $this->createMock(RequestGuardInterface::class);
+        $guard   = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::never())->method('authorize');
 
         $response            = $this->createMock(ResponseInterface::class);
         $request             = $this->request();
-        $authorizeMiddleware = new AuthorizeMiddleware($guard);
+        $authorizeMiddleware = new AuthorizeMiddleware($guard, false);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
     }
@@ -80,6 +80,42 @@ final class AuthorizeMiddlewareTest extends TestCase
 
         $guard = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::once())->method('authorize')->with($request, 'posts.read', []);
+
+        $response            = $this->createMock(ResponseInterface::class);
+        $authorizeMiddleware = new AuthorizeMiddleware($guard);
+
+        self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
+    }
+
+    #[Test]
+    public function fallsBackToRouteOptionWhenRequestPermissionAttributeIsEmpty(): void
+    {
+        $request = $this->request([
+            RbacAttribute::Permission->value => '   ',
+        ], $this->routeResult([
+            RbacAttribute::Permission->value => 'admin.access',
+        ]));
+
+        $guard = $this->createMock(RequestGuardInterface::class);
+        $guard->expects(self::once())->method('authorize')->with($request, 'admin.access', []);
+
+        $response            = $this->createMock(ResponseInterface::class);
+        $authorizeMiddleware = new AuthorizeMiddleware($guard);
+
+        self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
+    }
+
+    #[Test]
+    public function fallsBackToRouteOptionWhenRequestPermissionAttributeIsNotAString(): void
+    {
+        $request = $this->request([
+            RbacAttribute::Permission->value => false,
+        ], $this->routeResult([
+            RbacAttribute::Permission->value => 'admin.access',
+        ]));
+
+        $guard = $this->createMock(RequestGuardInterface::class);
+        $guard->expects(self::once())->method('authorize')->with($request, 'admin.access', []);
 
         $response            = $this->createMock(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
@@ -176,7 +212,7 @@ final class AuthorizeMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function passesThroughOnEmptyPermissionString(): void
+    public function rejectsEmptyPermissionStringWithoutRouteOptionByDefault(): void
     {
         $guard = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::never())->method('authorize');
@@ -185,10 +221,58 @@ final class AuthorizeMiddlewareTest extends TestCase
             RbacAttribute::Permission->value => '',
         ]);
 
-        $response            = $this->createMock(ResponseInterface::class);
-        $authorizeMiddleware = new AuthorizeMiddleware($guard);
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
 
-        self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
+        $this->expectException(AuthorizationException::class);
+
+        (new AuthorizeMiddleware($guard))->process($request, $handler);
+    }
+
+    #[Test]
+    public function strictModeRejectsMissingAuthorizationMetadata(): void
+    {
+        $guard = $this->createMock(RequestGuardInterface::class);
+        $guard->expects(self::never())->method('authorize');
+
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+
+        $this->expectException(AuthorizationException::class);
+
+        (new AuthorizeMiddleware($guard, true))->process($this->request(), $handler);
+    }
+
+    #[Test]
+    public function strictModeDoesNotExposeMetadataFailureToTheClient(): void
+    {
+        $guard   = $this->createMock(RequestGuardInterface::class);
+        $handler = $this->createMock(RequestHandlerInterface::class);
+
+        try {
+            (new AuthorizeMiddleware($guard, true))->process($this->request(), $handler);
+            self::fail('Expected strict authorization to reject missing metadata.');
+        } catch (AuthorizationException $exception) {
+            self::assertSame('Authorization metadata is required.', $exception->getMessage());
+            self::assertSame('Forbidden', $exception->getPublicMessage());
+        }
+    }
+
+    #[Test]
+    public function strictModeRejectsFailedRouteResultWithoutPermissionMetadata(): void
+    {
+        $guard = $this->createMock(RequestGuardInterface::class);
+        $guard->expects(self::never())->method('authorize');
+
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+
+        $this->expectException(AuthorizationException::class);
+
+        (new AuthorizeMiddleware($guard, true))->process(
+            $this->request([], RouteResult::fromRouteFailure(null)),
+            $handler,
+        );
     }
 
     /**

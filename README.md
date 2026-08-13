@@ -103,8 +103,10 @@ Resolution rules:
 
 - exact match beats wildcard;
 - more specific wildcard beats broader wildcard;
-- latest association wins when specificity is equal;
+- the association with the highest priority wins when specificity is equal;
 - another actor role may still grant access if one role forbids it.
+
+Priority is assigned when an association is created, so this resolution is deterministic even when a custom `PermissionStoreInterface` returns associations in a different order. The resolver derives specificity from the pattern at evaluation time and rejects invalid store data.
 
 ### Conflict Resolution: Allow wins over Deny
 
@@ -119,6 +121,8 @@ Permissions use dot-notation and support greedy terminal wildcard matching:
 - `posts.*` matches `posts.read`, `posts.update`, and nested resources like `posts.read.history`.
 - `admin.*` grants access to all sub-resources of any depth.
 - Non-terminal wildcards, for example `admin.*.delete`, still require exact segment positioning.
+
+Permission identifiers and patterns are validated strictly: they are dot-separated, non-empty, whitespace-free segments. A wildcard must be a complete pattern segment (`*`); it is allowed in patterns only, never in a requested permission. A terminal wildcard is greedy, while a wildcard in any earlier position matches exactly one segment.
 
 ## Rules
 
@@ -172,9 +176,25 @@ If the request attribute contains an RBAC `ActorInterface`, it is used directly.
 
 `AuthorizeMiddleware` resolves permission metadata in this order:
 
-1. request attribute `sirix.rbac.permission`;
+1. a non-empty string request attribute `sirix.rbac.permission`;
 2. matched route option `sirix.rbac.permission`;
-3. if missing or empty, pass through without authorization.
+3. if missing, reject the request unless permissive mode is explicitly enabled.
+
+An empty, whitespace-only, or non-string request attribute is ignored, so it cannot shadow a permission declared on the matched route.
+
+Strict mode is enabled by default. It rejects requests for which the middleware cannot resolve permission metadata (including missing or failed routing results), preventing an authorization bypass caused by middleware ordering or incomplete route configuration. To preserve a deliberately permissive pipeline, explicitly disable it:
+
+```php
+return [
+    'rbac' => [
+        'authorize_middleware' => [
+            'strict' => false,
+        ],
+    ],
+];
+```
+
+Place `AuthorizeMiddleware` after Mezzio's routing middleware so matched route options are available. Disabling strict mode should be limited to deliberately unprotected pipelines.
 
 Context follows the same order:
 
@@ -207,7 +227,7 @@ $app->post('/posts/:id', [
 ]);
 ```
 
-You can also set request attributes before `AuthorizeMiddleware` runs. Request attributes take precedence over route options.
+You can also set a non-empty string request attribute before `AuthorizeMiddleware` runs. Such an attribute takes precedence over route options.
 
 ### With `sirix/mezzio-routing-attributes`
 
@@ -372,12 +392,16 @@ final readonly class DatabasePermissionStore implements PermissionStoreInterface
 {
     public function associationsForRole(string $role): array
     {
-        // Fetch from DB and map to PermissionAssociation objects.
+        // Fetch only associations whose role exactly equals $role.
+        // Each association must have a unique priority.
+        // Specificity is derived from the pattern during authorization.
     }
 
     // ... implement other methods
 }
 ```
+
+Invalid store data, including an association for another role or duplicate priorities, causes authorization to fail with `LogicException`.
 
 ### Custom Rules
 

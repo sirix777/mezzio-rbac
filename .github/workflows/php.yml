@@ -34,6 +34,9 @@ jobs:
             - name: Install dependencies
               run: composer install
 
+            - name: Audit Composer dependencies
+              run: composer audit --locked
+
             - name: Run cs-check
               run: composer cs-check
 
@@ -42,3 +45,38 @@ jobs:
 
             - name: Run phpunit
               run: composer test
+
+    coverage:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.2"
+                  coverage: pcov
+
+            - name: Install dependencies
+              run: composer install
+
+            - name: Generate Clover coverage report
+              run: composer test -- --coverage-clover clover.xml
+
+            - name: Enforce coverage threshold
+              env:
+                  COVERAGE_THRESHOLD: "93.87"
+              run: >
+                  php -r '$metrics = simplexml_load_file("clover.xml")->project->metrics;
+                  $covered = (int) $metrics["coveredstatements"];
+                  $statements = (int) $metrics["statements"];
+                  $coverage = 0 === $statements ? 0 : ($covered / $statements) * 100;
+                  printf("Statement coverage: %.2f%%\\n", $coverage);
+                  exit($coverage < (float) getenv("COVERAGE_THRESHOLD") ? 1 : 0);'
+
+            - name: Upload coverage report
+              uses: actions/upload-artifact@v4
+              with:
+                  name: clover-coverage
+                  path: clover.xml
+                  retention-days: 14

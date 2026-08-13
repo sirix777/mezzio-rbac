@@ -39,7 +39,7 @@ final class InMemoryPermissionStoreTest extends TestCase
     public function addAssociationForRole(): void
     {
         $this->inMemoryPermissionStore->addRole('admin');
-        $permissionAssociation = new PermissionAssociation('admin', 'posts.*', AllowRule::class, 1, 1002);
+        $permissionAssociation = new PermissionAssociation('admin', 'posts.*', AllowRule::class, 1);
         $this->inMemoryPermissionStore->addAssociation($permissionAssociation);
 
         $associations = $this->inMemoryPermissionStore->associationsForRole('admin');
@@ -57,8 +57,8 @@ final class InMemoryPermissionStoreTest extends TestCase
     public function multipleAssociationsForRole(): void
     {
         $this->inMemoryPermissionStore->addRole('admin');
-        $this->inMemoryPermissionStore->addAssociation(new PermissionAssociation('admin', 'posts.*', AllowRule::class, 1, 1002));
-        $this->inMemoryPermissionStore->addAssociation(new PermissionAssociation('admin', 'posts.read', AllowRule::class, 2, 2002));
+        $this->inMemoryPermissionStore->addAssociation(new PermissionAssociation('admin', 'posts.*', AllowRule::class, 1));
+        $this->inMemoryPermissionStore->addAssociation(new PermissionAssociation('admin', 'posts.read', AllowRule::class, 2));
 
         $associations = $this->inMemoryPermissionStore->associationsForRole('admin');
         self::assertCount(2, $associations);

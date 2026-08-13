@@ -16,6 +16,4 @@ interface PermissionAssociationInterface
     public function getRule(): RuleInterface|string|null;
 
     public function getPriority(): int;
-
-    public function getSpecificity(): int;
 }

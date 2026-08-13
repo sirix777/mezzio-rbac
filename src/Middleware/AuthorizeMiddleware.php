@@ -10,22 +10,32 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Sirix\Mezzio\Rbac\Contract\RequestGuardInterface;
+use Sirix\Mezzio\Rbac\Exception\AuthorizationException;
 use Sirix\Mezzio\Rbac\RbacAttribute;
 use stdClass;
 
 use function is_array;
 use function is_int;
 use function is_string;
+use function trim;
 
 final readonly class AuthorizeMiddleware implements MiddlewareInterface
 {
-    public function __construct(private RequestGuardInterface $requestGuard) {}
+    public function __construct(private RequestGuardInterface $requestGuard, private bool $strict = true) {}
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $permission = $this->resolvePermission($request);
 
         if (null === $permission) {
+            if ($this->strict) {
+                throw new AuthorizationException(
+                    permission: '',
+                    message: 'Authorization metadata is required.',
+                    publicMessage: 'Forbidden',
+                );
+            }
+
             return $handler->handle($request);
         }
 
@@ -45,12 +55,15 @@ final readonly class AuthorizeMiddleware implements MiddlewareInterface
         $permission = $serverRequest->getAttribute(RbacAttribute::Permission->value, $missing);
 
         if ($permission !== $missing) {
-            return is_string($permission) && '' !== $permission ? $permission : null;
+            $permission = $this->nonEmptyPermission($permission);
+            if (null !== $permission) {
+                return $permission;
+            }
         }
 
         $permission = $this->resolveRouteOption($serverRequest, RbacAttribute::Permission->value);
 
-        return is_string($permission) && '' !== $permission ? $permission : null;
+        return $this->nonEmptyPermission($permission);
     }
 
     private function resolveRawContext(ServerRequestInterface $serverRequest): mixed
@@ -78,6 +91,17 @@ final readonly class AuthorizeMiddleware implements MiddlewareInterface
         }
 
         return $route->getOptions()[$key] ?? null;
+    }
+
+    private function nonEmptyPermission(mixed $permission): ?string
+    {
+        if (! is_string($permission)) {
+            return null;
+        }
+
+        $permission = trim($permission);
+
+        return '' === $permission ? null : $permission;
     }
 
     /**

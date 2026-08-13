@@ -16,8 +16,7 @@ final readonly class PermissionAssociation implements PermissionAssociationInter
         public string $role,
         public string $pattern,
         public RuleInterface|string|null $rule,
-        public int $priority,
-        public int $specificity,
+        public int $priority
     ) {}
 
     public function getRole(): string
@@ -38,10 +37,5 @@ final readonly class PermissionAssociation implements PermissionAssociationInter
     public function getPriority(): int
     {
         return $this->priority;
-    }
-
-    public function getSpecificity(): int
-    {
-        return $this->specificity;
     }
 }

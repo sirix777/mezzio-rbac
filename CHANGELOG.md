@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-08-13
+
+### Security
+- `AuthorizeMiddleware` now rejects requests without resolved authorization metadata by default. Set `rbac.authorize_middleware.strict` to `false` only for deliberately permissive pipelines.
+
+### Changed
+- Expanded the supported `sirix/container-resolver` constraint from `^0.2` to `^0.2 || ^1.0`.
+- Permission identifiers and patterns now reject empty segments, whitespace, partial wildcards, and wildcards in requested permissions. Validate existing configuration before upgrading.
+- Equal-specificity associations are resolved by their priority independently of custom store ordering. Custom `PermissionStoreInterface` implementations must return associations for the requested role only and use unique priorities; invalid store data now raises `LogicException`.
+- Specificity is now derived from the permission pattern as an ordered segment pair. `PermissionMatcher::specificity()` now returns that pair; `PermissionAssociationInterface::getSpecificity()` and the corresponding `PermissionAssociation` constructor argument were removed.
+
+### Upgrade Notes
+- This is a major release: authorization middleware is fail-closed by default, permission syntax is stricter, and custom permission stores are validated at the trust boundary.
+- Update calls to `PermissionMatcher::specificity()` to use its `{exactSegments, segmentCount}` result, and update custom `PermissionAssociation` implementations and constructors to remove persisted specificity.
+
 ## [1.0.1] - 2026-08-12
 
 ### Changed

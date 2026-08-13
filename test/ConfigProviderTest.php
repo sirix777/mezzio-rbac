@@ -7,7 +7,9 @@ namespace SirixTest\Mezzio\Rbac;
 use Laminas\ServiceManager\ServiceManager;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Sirix\Mezzio\Rbac\Actor\Actor;
 use Sirix\Mezzio\Rbac\Actor\GuestActor;
 use Sirix\Mezzio\Rbac\AuthorizationEvaluator;
@@ -19,6 +21,7 @@ use Sirix\Mezzio\Rbac\Contract\PermissionsInterface;
 use Sirix\Mezzio\Rbac\Contract\PermissionStoreInterface;
 use Sirix\Mezzio\Rbac\Contract\RequestActorProviderInterface;
 use Sirix\Mezzio\Rbac\Contract\RequestGuardInterface;
+use Sirix\Mezzio\Rbac\Exception\AuthorizationException;
 use Sirix\Mezzio\Rbac\Extractor\CanAttributeExtractor;
 use Sirix\Mezzio\Rbac\InMemoryPermissionStore;
 use Sirix\Mezzio\Rbac\Middleware\AuthorizeMiddleware;
@@ -153,5 +156,46 @@ final class ConfigProviderTest extends TestCase
         $guard = $serviceManager->get(RequestGuardInterface::class);
         self::assertInstanceOf(RequestGuardInterface::class, $guard);
         self::assertTrue($guard->allows($request, 'posts.read'));
+    }
+
+    #[Test]
+    public function configuredAuthorizeMiddlewareRejectsRequestsWithoutAuthorizationMetadataByDefault(): void
+    {
+        $serviceManager = new ServiceManager((new ConfigProvider())->getDependencies());
+
+        $request = $this->createMock(ServerRequestInterface::class);
+        $request->method('getAttribute')->willReturn(null);
+
+        $this->expectException(AuthorizationException::class);
+
+        $serviceManager->get(AuthorizeMiddleware::class)->process(
+            $request,
+            $this->createMock(RequestHandlerInterface::class),
+        );
+    }
+
+    #[Test]
+    public function configuredPermissiveAuthorizeMiddlewareAllowsRequestsWithoutAuthorizationMetadata(): void
+    {
+        $dependencies                       = (new ConfigProvider())->getDependencies();
+        $dependencies['services']['config'] = [
+            'rbac' => [
+                'authorize_middleware' => [
+                    'strict' => false,
+                ],
+            ],
+        ];
+        $serviceManager = new ServiceManager($dependencies);
+
+        $request = $this->createMock(ServerRequestInterface::class);
+        $request->method('getAttribute')->willReturn(null);
+        $response = $this->createMock(ResponseInterface::class);
+        $handler  = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::once())->method('handle')->with($request)->willReturn($response);
+
+        self::assertSame($response, $serviceManager->get(AuthorizeMiddleware::class)->process(
+            $request,
+            $handler,
+        ));
     }
 }

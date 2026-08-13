@@ -9,6 +9,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Sirix\Mezzio\Rbac\PermissionMatcher;
 
+use function array_fill;
+use function implode;
+
 final class PermissionMatcherTest extends TestCase
 {
     private PermissionMatcher $permissionMatcher;
@@ -50,20 +53,48 @@ final class PermissionMatcherTest extends TestCase
     #[Test]
     public function specificityExactPermission(): void
     {
-        self::assertSame(2002, $this->permissionMatcher->specificity('posts.read'));
+        self::assertSame([
+            'exactSegments' => 2,
+            'segmentCount'  => 2,
+        ], $this->permissionMatcher->specificity('posts.read'));
     }
 
     #[Test]
     public function specificityWildcard(): void
     {
-        self::assertSame(1002, $this->permissionMatcher->specificity('posts.*'));
+        self::assertSame([
+            'exactSegments' => 1,
+            'segmentCount'  => 2,
+        ], $this->permissionMatcher->specificity('posts.*'));
     }
 
     #[Test]
     public function specificityMultipleWildcards(): void
     {
-        self::assertSame(3, $this->permissionMatcher->specificity('*.*.*'));
-        self::assertSame(2003, $this->permissionMatcher->specificity('admin.users.*'));
+        self::assertSame([
+            'exactSegments' => 0,
+            'segmentCount'  => 3,
+        ], $this->permissionMatcher->specificity('*.*.*'));
+        self::assertSame([
+            'exactSegments' => 2,
+            'segmentCount'  => 3,
+        ], $this->permissionMatcher->specificity('admin.users.*'));
+    }
+
+    #[Test]
+    public function specificityDoesNotCollideForLongWildcardPatterns(): void
+    {
+        self::assertSame(
+            [
+                'exactSegments' => 1,
+                'segmentCount'  => 2,
+            ],
+            $this->permissionMatcher->specificity('a.*'),
+        );
+        self::assertNotSame(
+            $this->permissionMatcher->specificity('a.*'),
+            $this->permissionMatcher->specificity(implode('.', array_fill(0, 1002, '*'))),
+        );
     }
 
     #[Test]
@@ -78,5 +109,31 @@ final class PermissionMatcherTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->permissionMatcher->specificity('');
+    }
+
+    #[Test]
+    public function throwsOnMalformedPermissionPatterns(): void
+    {
+        foreach (['.posts.read', 'posts.', 'posts..read', 'posts. read', 'posts.re ad', 'posts.foo*', 'posts.**'] as $pattern) {
+            try {
+                $this->permissionMatcher->specificity($pattern);
+                self::fail("Expected '{$pattern}' to be rejected.");
+            } catch (InvalidArgumentException) {
+                self::addToAssertionCount(1);
+            }
+        }
+    }
+
+    #[Test]
+    public function throwsWhenRequestedPermissionContainsWildcard(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->permissionMatcher->matches('posts.*', 'posts.*');
+    }
+
+    #[Test]
+    public function acceptsWildcardOnlyAsAnEntirePatternSegment(): void
+    {
+        self::assertTrue($this->permissionMatcher->matches('posts.*.history', 'posts.read.history'));
     }
 }
