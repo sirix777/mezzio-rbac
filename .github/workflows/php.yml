@@ -28,6 +28,23 @@ jobs:
                   php-version: ${{ matrix.php-version }}
                   coverage: none
 
+            - name: Install dependencies
+              run: composer install
+
+            - name: Run phpunit
+              run: composer test
+
+    quality:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.5"
+                  coverage: none
+
             - name: Validate composer.json
               run: composer validate --strict --no-check-lock
 
@@ -42,9 +59,6 @@ jobs:
 
             - name: Run phpstan
               run: composer phpstan
-
-            - name: Run phpunit
-              run: composer test
 
     coverage:
         runs-on: ubuntu-latest

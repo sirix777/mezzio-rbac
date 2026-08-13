@@ -12,7 +12,12 @@ final readonly class PermissionAssociation implements PermissionAssociationInter
     /**
      * @param null|class-string<RuleInterface>|RuleInterface $rule
      */
-    public function __construct(public string $role, public string $pattern, public RuleInterface|string|null $rule, public int $priority) {}
+    public function __construct(
+        public string $role,
+        public string $pattern,
+        public RuleInterface|string|null $rule,
+        public int $priority
+    ) {}
 
     public function getRole(): string
     {
