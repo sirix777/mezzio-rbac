@@ -11,7 +11,7 @@ return ConfigBuilder::create()
         'PedroTroller/line_break_between_method_arguments' => [
             'max-args' => 4,
             'max-length' => 140,
-            'automatic-argument-merge' => true,
+            'automatic-argument-merge' => false,
             'inline-attributes' => true,
         ],
         'Gordinskiy/line_length_limit' => ['max_length' => 160],
