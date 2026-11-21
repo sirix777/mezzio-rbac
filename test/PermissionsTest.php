@@ -208,4 +208,13 @@ final class PermissionsTest extends TestCase
         $this->expectException(LogicException::class);
         $permissions->bestAssociationForRole('editor', 'posts.delete');
     }
+
+    #[Test]
+    public function throwsOnAssociateWithBlankRole(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Role must be a non-empty string.');
+
+        $this->permissions->associate(' ', 'posts.read');
+    }
 }

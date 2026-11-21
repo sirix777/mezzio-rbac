@@ -14,7 +14,7 @@ use Sirix\Mezzio\Rbac\Contract\RequestActorProviderInterface;
 
 final class RequestActorProviderFactory
 {
-    private const DEFAULT_ACTOR_ATTRIBUTE = 'sirix.authentication.actor';
+    private const string DEFAULT_ACTOR_ATTRIBUTE = 'sirix.authentication.actor';
 
     /**
      * @throws ContainerExceptionInterface

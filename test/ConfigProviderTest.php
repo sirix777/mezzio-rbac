@@ -11,6 +11,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Sirix\Mezzio\Rbac\Actor\Actor;
+use Sirix\Mezzio\Rbac\Actor\ContainerActorProvider;
 use Sirix\Mezzio\Rbac\Actor\GuestActor;
 use Sirix\Mezzio\Rbac\AuthorizationEvaluator;
 use Sirix\Mezzio\Rbac\ConfigProvider;
@@ -23,6 +24,7 @@ use Sirix\Mezzio\Rbac\Contract\RequestActorProviderInterface;
 use Sirix\Mezzio\Rbac\Contract\RequestGuardInterface;
 use Sirix\Mezzio\Rbac\Exception\AuthorizationException;
 use Sirix\Mezzio\Rbac\Extractor\CanAttributeExtractor;
+use Sirix\Mezzio\Rbac\Guard;
 use Sirix\Mezzio\Rbac\InMemoryPermissionStore;
 use Sirix\Mezzio\Rbac\Middleware\AuthorizeMiddleware;
 use Sirix\Mezzio\Rbac\PermissionMatcher;
@@ -145,7 +147,7 @@ final class ConfigProviderTest extends TestCase
         $permissions->addRole('admin');
         $permissions->associate('admin', 'posts.read');
 
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')
             ->willReturnCallback(static fn (string $name, $default = null): mixed => match ($name) {
                 'sirix.authentication.actor' => new Actor(['admin']),
@@ -163,14 +165,14 @@ final class ConfigProviderTest extends TestCase
     {
         $serviceManager = new ServiceManager((new ConfigProvider())->getDependencies());
 
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')->willReturn(null);
 
         $this->expectException(AuthorizationException::class);
 
         $serviceManager->get(AuthorizeMiddleware::class)->process(
             $request,
-            $this->createMock(RequestHandlerInterface::class),
+            $this->createStub(RequestHandlerInterface::class),
         );
     }
 
@@ -187,9 +189,9 @@ final class ConfigProviderTest extends TestCase
         ];
         $serviceManager = new ServiceManager($dependencies);
 
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')->willReturn(null);
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $handler  = $this->createMock(RequestHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with($request)->willReturn($response);
 
@@ -197,5 +199,22 @@ final class ConfigProviderTest extends TestCase
             $request,
             $handler,
         ));
+    }
+
+    #[Test]
+    public function configuredServiceManagerBuildsAGuardThatAuthorizesTheGuestRole(): void
+    {
+        $serviceManager = new ServiceManager((new ConfigProvider())->getDependencies());
+        $actorProvider  = $serviceManager->get(ActorProviderInterface::class);
+        $guard          = $serviceManager->get(GuardInterface::class);
+        $permissions    = $serviceManager->get(PermissionsInterface::class);
+        $permissions->addRole('guest');
+        $permissions->associate('guest', 'posts.read');
+
+        self::assertInstanceOf(ContainerActorProvider::class, $actorProvider);
+        self::assertInstanceOf(GuestActor::class, $actorProvider->getActor());
+        self::assertInstanceOf(Guard::class, $guard);
+        self::assertTrue($guard->allows('posts.read'));
+        self::assertTrue($guard->denies('posts.write'));
     }
 }

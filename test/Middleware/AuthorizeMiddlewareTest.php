@@ -27,7 +27,7 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard   = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::never())->method('authorize');
 
-        $response            = $this->createMock(ResponseInterface::class);
+        $response            = $this->createStub(ResponseInterface::class);
         $request             = $this->request();
         $authorizeMiddleware = new AuthorizeMiddleware($guard, false);
 
@@ -45,7 +45,7 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::once())->method('authorize')->with($request, 'posts.read', []);
 
-        $response            = $this->createMock(ResponseInterface::class);
+        $response            = $this->createStub(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -62,7 +62,7 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::once())->method('authorize')->with($request, 'admin.access', []);
 
-        $response            = $this->createMock(ResponseInterface::class);
+        $response            = $this->createStub(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -81,7 +81,7 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::once())->method('authorize')->with($request, 'posts.read', []);
 
-        $response            = $this->createMock(ResponseInterface::class);
+        $response            = $this->createStub(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -99,7 +99,7 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::once())->method('authorize')->with($request, 'admin.access', []);
 
-        $response            = $this->createMock(ResponseInterface::class);
+        $response            = $this->createStub(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -117,7 +117,7 @@ final class AuthorizeMiddlewareTest extends TestCase
         $guard = $this->createMock(RequestGuardInterface::class);
         $guard->expects(self::once())->method('authorize')->with($request, 'admin.access', []);
 
-        $response            = $this->createMock(ResponseInterface::class);
+        $response            = $this->createStub(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -126,7 +126,7 @@ final class AuthorizeMiddlewareTest extends TestCase
     #[Test]
     public function throwsOnAuthorizationFailure(): void
     {
-        $guard = $this->createMock(RequestGuardInterface::class);
+        $guard = $this->createStub(RequestGuardInterface::class);
         $guard->method('authorize')->willThrowException(new AuthorizationException('posts.delete'));
 
         $request = $this->request([
@@ -134,9 +134,12 @@ final class AuthorizeMiddlewareTest extends TestCase
             RbacAttribute::Context->value    => [],
         ]);
 
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::never())->method('handle');
+
         $this->expectException(AuthorizationException::class);
 
-        (new AuthorizeMiddleware($guard))->process($request, $this->createMock(RequestHandlerInterface::class));
+        (new AuthorizeMiddleware($guard))->process($request, $handler);
     }
 
     #[Test]
@@ -155,7 +158,7 @@ final class AuthorizeMiddlewareTest extends TestCase
             'postId' => '123',
         ]);
 
-        $response            = $this->createMock(ResponseInterface::class);
+        $response            = $this->createStub(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -178,7 +181,7 @@ final class AuthorizeMiddlewareTest extends TestCase
             'postId' => '123',
         ]);
 
-        $response            = $this->createMock(ResponseInterface::class);
+        $response            = $this->createStub(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -205,7 +208,7 @@ final class AuthorizeMiddlewareTest extends TestCase
             'postId' => 'request-id',
         ]);
 
-        $response            = $this->createMock(ResponseInterface::class);
+        $response            = $this->createStub(ResponseInterface::class);
         $authorizeMiddleware = new AuthorizeMiddleware($guard);
 
         self::assertSame($response, $authorizeMiddleware->process($request, $this->handlerReturning($response)));
@@ -246,8 +249,8 @@ final class AuthorizeMiddlewareTest extends TestCase
     #[Test]
     public function strictModeDoesNotExposeMetadataFailureToTheClient(): void
     {
-        $guard   = $this->createMock(RequestGuardInterface::class);
-        $handler = $this->createMock(RequestHandlerInterface::class);
+        $guard   = $this->createStub(RequestGuardInterface::class);
+        $handler = $this->createStub(RequestHandlerInterface::class);
 
         try {
             (new AuthorizeMiddleware($guard, true))->process($this->request(), $handler);
@@ -275,12 +278,47 @@ final class AuthorizeMiddlewareTest extends TestCase
         );
     }
 
+    #[Test]
+    public function ignoresInvalidContextDefinitions(): void
+    {
+        $request = $this->request([
+            RbacAttribute::Permission->value => 'posts.update',
+            RbacAttribute::Context->value    => [
+                'postId' => 'id',
+                'blank'  => '',
+                'number' => 42,
+            ],
+            'id'                             => '123',
+        ]);
+
+        $guard = $this->createMock(RequestGuardInterface::class);
+        $guard->expects(self::once())->method('authorize')->with($request, 'posts.update', [
+            'postId' => '123',
+        ]);
+
+        (new AuthorizeMiddleware($guard))->process($request, $this->handlerReturning($this->createStub(ResponseInterface::class)));
+    }
+
+    #[Test]
+    public function treatsANonArrayContextAsEmpty(): void
+    {
+        $request = $this->request([
+            RbacAttribute::Permission->value => 'posts.update',
+            RbacAttribute::Context->value    => 'id',
+        ]);
+
+        $guard = $this->createMock(RequestGuardInterface::class);
+        $guard->expects(self::once())->method('authorize')->with($request, 'posts.update', []);
+
+        (new AuthorizeMiddleware($guard))->process($request, $this->handlerReturning($this->createStub(ResponseInterface::class)));
+    }
+
     /**
      * @param array<string, mixed> $attributes
      */
     private function request(array $attributes = [], ?RouteResult $routeResult = null): ServerRequestInterface
     {
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')
             ->willReturnCallback(static function(string $name, mixed $default = null) use ($attributes, $routeResult): mixed {
                 if (array_key_exists($name, $attributes)) {
@@ -300,7 +338,7 @@ final class AuthorizeMiddlewareTest extends TestCase
 
     private function handlerReturning(ResponseInterface $response): RequestHandlerInterface
     {
-        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willReturn($response);
 
         return $handler;

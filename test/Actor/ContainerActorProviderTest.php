@@ -17,7 +17,7 @@ final class ContainerActorProviderTest extends TestCase
     public function returnsGuestActorWhenNoActorInContainer(): void
     {
         $container = $this->createMock(ContainerInterface::class);
-        $container->method('has')->with(ActorInterface::class)->willReturn(false);
+        $container->expects(self::atLeastOnce())->method('has')->with(ActorInterface::class)->willReturn(false);
         $guestActor = new GuestActor();
 
         $containerActorProvider = new ContainerActorProvider($container, $guestActor);
@@ -29,12 +29,12 @@ final class ContainerActorProviderTest extends TestCase
     #[Test]
     public function returnsActorFromContainer(): void
     {
-        $actor = $this->createMock(ActorInterface::class);
+        $actor = $this->createStub(ActorInterface::class);
         $actor->method('getRoles')->willReturn(['admin']);
 
         $container = $this->createMock(ContainerInterface::class);
-        $container->method('has')->with(ActorInterface::class)->willReturn(true);
-        $container->method('get')->with(ActorInterface::class)->willReturn($actor);
+        $container->expects(self::atLeastOnce())->method('has')->with(ActorInterface::class)->willReturn(true);
+        $container->expects(self::atLeastOnce())->method('get')->with(ActorInterface::class)->willReturn($actor);
 
         $containerActorProvider = new ContainerActorProvider($container, new GuestActor());
         $result                 = $containerActorProvider->getActor();
@@ -46,8 +46,8 @@ final class ContainerActorProviderTest extends TestCase
     public function returnsGuestActorWhenContainerReturnsNonActor(): void
     {
         $container = $this->createMock(ContainerInterface::class);
-        $container->method('has')->with(ActorInterface::class)->willReturn(true);
-        $container->method('get')->with(ActorInterface::class)->willReturn('not-an-actor');
+        $container->expects(self::atLeastOnce())->method('has')->with(ActorInterface::class)->willReturn(true);
+        $container->expects(self::atLeastOnce())->method('get')->with(ActorInterface::class)->willReturn('not-an-actor');
 
         $containerActorProvider = new ContainerActorProvider($container, new GuestActor());
         $actor                  = $containerActorProvider->getActor();
