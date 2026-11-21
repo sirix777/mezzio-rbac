@@ -29,7 +29,7 @@ final class AuthorizationEvaluatorTest extends TestCase
             new InMemoryPermissionStore(),
         );
 
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $container->method('has')->willReturn(false);
 
         $this->authorizationEvaluator = new AuthorizationEvaluator(

@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Sirix\Mezzio\Rbac\Actor\GenericActorAdapter;
 use Sirix\Mezzio\Rbac\Contract\ActorInterface;
+use stdClass;
 
 final class GenericActorAdapterTest extends TestCase
 {
@@ -75,5 +76,11 @@ final class GenericActorAdapterTest extends TestCase
         });
 
         self::assertSame([], $genericActorAdapter->getRoles());
+    }
+
+    #[Test]
+    public function returnsEmptyRolesWhenTheActorHasNoGetRolesMethod(): void
+    {
+        self::assertSame([], (new GenericActorAdapter(new stdClass()))->getRoles());
     }
 }

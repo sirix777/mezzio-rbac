@@ -86,4 +86,14 @@ final class CanAttributeExtractorTest extends TestCase
 
         self::assertSame($first, $second);
     }
+
+    #[Test]
+    public function cachesMethodLevelExtraction(): void
+    {
+        $first  = $this->canAttributeExtractor->extractForMethod(MethodLevelCanHandler::class, 'update');
+        $second = $this->canAttributeExtractor->extractForMethod(MethodLevelCanHandler::class, 'update');
+
+        self::assertSame($first, $second);
+        self::assertSame('posts.update', $first[0]->permission);
+    }
 }

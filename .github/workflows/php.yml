@@ -18,7 +18,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php-version: ["8.2", "8.3", "8.4", "8.5"]
+                php-version: ["8.3", "8.4", "8.5", "8.6"]
         steps:
             - uses: actions/checkout@v5
 
@@ -68,7 +68,7 @@ jobs:
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: "8.2"
+                  php-version: "8.3"
                   coverage: pcov
 
             - name: Install dependencies
@@ -79,7 +79,7 @@ jobs:
 
             - name: Enforce coverage threshold
               env:
-                  COVERAGE_THRESHOLD: "93.87"
+                  COVERAGE_THRESHOLD: "99.5"
               run: >
                   php -r '$metrics = simplexml_load_file("clover.xml")->project->metrics;
                   $covered = (int) $metrics["coveredstatements"];

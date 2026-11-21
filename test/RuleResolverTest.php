@@ -17,7 +17,7 @@ final class RuleResolverTest extends TestCase
     #[Test]
     public function resolvesRuleInstance(): void
     {
-        $container    = $this->createMock(ContainerInterface::class);
+        $container    = $this->createStub(ContainerInterface::class);
         $ruleResolver = new RuleResolver($container, new AllowRule());
 
         $forbidRule = new ForbidRule();
@@ -27,7 +27,7 @@ final class RuleResolverTest extends TestCase
     #[Test]
     public function resolvesNullToDefaultRule(): void
     {
-        $container    = $this->createMock(ContainerInterface::class);
+        $container    = $this->createStub(ContainerInterface::class);
         $allowRule    = new AllowRule();
         $ruleResolver = new RuleResolver($container, $allowRule);
 
@@ -39,8 +39,8 @@ final class RuleResolverTest extends TestCase
     {
         $allowRule = new AllowRule();
         $container = $this->createMock(ContainerInterface::class);
-        $container->method('has')->with(AllowRule::class)->willReturn(true);
-        $container->method('get')->with(AllowRule::class)->willReturn($allowRule);
+        $container->expects(self::atLeastOnce())->method('has')->with(AllowRule::class)->willReturn(true);
+        $container->expects(self::atLeastOnce())->method('get')->with(AllowRule::class)->willReturn($allowRule);
 
         $ruleResolver = new RuleResolver($container, new ForbidRule());
         self::assertSame($allowRule, $ruleResolver->resolve(AllowRule::class));
@@ -49,7 +49,7 @@ final class RuleResolverTest extends TestCase
     #[Test]
     public function resolvesClassStringByInstantiation(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $container->method('has')->willReturn(false);
 
         $ruleResolver = new RuleResolver($container, new ForbidRule());
@@ -61,7 +61,7 @@ final class RuleResolverTest extends TestCase
     #[Test]
     public function throwsOnUnresolvableRule(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $container->method('has')->willReturn(false);
 
         $ruleResolver = new RuleResolver($container, new AllowRule());
@@ -75,8 +75,8 @@ final class RuleResolverTest extends TestCase
     public function throwsWhenContainerReturnsNonRuleAndClassDoesNotExist(): void
     {
         $container = $this->createMock(ContainerInterface::class);
-        $container->method('has')->with('NonExistentRule')->willReturn(true);
-        $container->method('get')->with('NonExistentRule')->willReturn('not-a-rule');
+        $container->expects(self::atLeastOnce())->method('has')->with('NonExistentRule')->willReturn(true);
+        $container->expects(self::atLeastOnce())->method('get')->with('NonExistentRule')->willReturn('not-a-rule');
 
         $ruleResolver = new RuleResolver($container, new ForbidRule());
 

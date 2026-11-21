@@ -51,7 +51,7 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
         $authorizeMiddleware = $this->middlewareWithAdminAccessPermission();
         $serverRequest       = $this->requestWithRoutePermissionAndAuthenticationActor(['admin']);
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $handler  = $this->createMock(RequestHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with($serverRequest)->willReturn($response);
 
@@ -83,7 +83,7 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
             ],
         );
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $handler  = $this->createMock(RequestHandlerInterface::class);
         $handler->expects(self::once())->method('handle')->with($serverRequest)->willReturn($response);
 
@@ -102,7 +102,7 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
 
     private function middleware(Permissions $permissions): AuthorizeMiddleware
     {
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $container->method('has')->willReturn(false);
 
         return new AuthorizeMiddleware(new RequestGuard(
@@ -130,11 +130,11 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
             RbacAttribute::Context->value    => $context,
         ], '/admin', 'admin');
 
-        $actor = new class($roles) {
+        $actor = new readonly class($roles) {
             /**
              * @param list<string> $roles
              */
-            public function __construct(private readonly array $roles) {}
+            public function __construct(private array $roles) {}
 
             /**
              * @return list<string>
@@ -145,7 +145,7 @@ final class AuthorizeMiddlewareIntegrationTest extends TestCase
             }
         };
 
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')
             ->willReturnCallback(static fn (string $name, $default = null): mixed => match ($name) {
                 RbacAttribute::Permission->value,

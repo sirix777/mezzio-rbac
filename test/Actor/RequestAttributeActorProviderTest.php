@@ -19,7 +19,7 @@ final class RequestAttributeActorProviderTest extends TestCase
     {
         $actor   = new Actor(['admin']);
         $request = $this->createMock(ServerRequestInterface::class);
-        $request->method('getAttribute')->with('actor')->willReturn($actor);
+        $request->expects(self::atLeastOnce())->method('getAttribute')->with('actor')->willReturn($actor);
 
         $requestAttributeActorProvider = new RequestAttributeActorProvider('actor', new GuestActor());
 
@@ -31,7 +31,7 @@ final class RequestAttributeActorProviderTest extends TestCase
     {
         $guestActor = new GuestActor();
         $request    = $this->createMock(ServerRequestInterface::class);
-        $request->method('getAttribute')->with('actor')->willReturn(null);
+        $request->expects(self::atLeastOnce())->method('getAttribute')->with('actor')->willReturn(null);
 
         $requestAttributeActorProvider = new RequestAttributeActorProvider('actor', $guestActor);
 
@@ -43,7 +43,7 @@ final class RequestAttributeActorProviderTest extends TestCase
     {
         $guestActor = new GuestActor();
         $request    = $this->createMock(ServerRequestInterface::class);
-        $request->method('getAttribute')->with('actor')->willReturn('not-an-actor');
+        $request->expects(self::atLeastOnce())->method('getAttribute')->with('actor')->willReturn('not-an-actor');
 
         $requestAttributeActorProvider = new RequestAttributeActorProvider('actor', $guestActor);
 
@@ -64,7 +64,7 @@ final class RequestAttributeActorProviderTest extends TestCase
         };
 
         $request = $this->createMock(ServerRequestInterface::class);
-        $request->method('getAttribute')->with('actor')->willReturn($genericActor);
+        $request->expects(self::atLeastOnce())->method('getAttribute')->with('actor')->willReturn($genericActor);
 
         $requestAttributeActorProvider = new RequestAttributeActorProvider('actor', new GuestActor());
         $actor                         = $requestAttributeActorProvider->getActor($request);

@@ -34,6 +34,7 @@ final class PermissionMatcherTest extends TestCase
         self::assertTrue($this->permissionMatcher->matches('posts.*', 'posts.read'));
         self::assertTrue($this->permissionMatcher->matches('posts.*', 'posts.write'));
         self::assertTrue($this->permissionMatcher->matches('posts.*', 'posts.read.history'));
+        self::assertFalse($this->permissionMatcher->matches('posts.*', 'posts'));
     }
 
     #[Test]
@@ -135,5 +136,7 @@ final class PermissionMatcherTest extends TestCase
     public function acceptsWildcardOnlyAsAnEntirePatternSegment(): void
     {
         self::assertTrue($this->permissionMatcher->matches('posts.*.history', 'posts.read.history'));
+        self::assertFalse($this->permissionMatcher->matches('posts.*.history', 'posts.a.b.history'));
+        self::assertFalse($this->permissionMatcher->matches('*.read', 'a.b.read'));
     }
 }
